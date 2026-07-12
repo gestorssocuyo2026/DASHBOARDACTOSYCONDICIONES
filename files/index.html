@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Actos Inseguros · Planta Cuyotenango</title>
+
+<script src="./vendor/xlsx.full.min.js"></script>
+<script src="./vendor/chart.umd.js"></script>
+<style>
+  :root{
+    --navy:#0E2038;
+    --navy-2:#132A47;
+    --orange:#F2622E;
+    --amber:#FFB627;
+    --teal:#1B998B;
+    --red:#E14B4B;
+    --bg:#F3F4F7;
+    --card:#FFFFFF;
+    --ink:#16232F;
+    --ink-soft:#5B6B7A;
+    --line:#E4E7EC;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .topbar{
+    background:var(--navy);
+    background-image:linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+    color:#fff;
+    padding:22px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    flex-wrap:wrap;
+    border-bottom:3px solid var(--orange);
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand-mark{
+    width:40px;height:40px;border-radius:10px;
+    background:conic-gradient(from 220deg, var(--orange), var(--amber), var(--teal), var(--orange));
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Segoe UI',system-ui,sans-serif;font-weight:700;color:var(--navy);font-size:15px;
+    flex-shrink:0;
+  }
+  .brand h1{
+    font-family:'Segoe UI',system-ui,sans-serif;
+    font-size:20px;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  .brand p{margin:2px 0 0;font-size:12px;color:#B9C6D6;letter-spacing:0.4px;text-transform:uppercase;}
+  .kpi{
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:14px;
+    padding:10px 22px;
+    text-align:right;
+  }
+  .kpi .num{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:34px;
+    font-weight:700;
+    color:var(--orange);
+    line-height:1;
+  }
+  .kpi .label{font-size:11px;color:#B9C6D6;text-transform:uppercase;letter-spacing:0.6px;margin-top:4px;}
+
+  .filters{
+    max-width:1400px;margin:0 auto;
+    padding:16px 28px 0;
+    display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;
+  }
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);font-weight:600;}
+  .field input, .field select{
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:8px;
+    padding:8px 10px;
+    font-family:'Segoe UI',system-ui,sans-serif;
+    font-size:13px;
+    color:var(--ink);
+    min-width:150px;
+  }
+  .field input:focus, .field select:focus{outline:2px solid var(--orange);outline-offset:1px;}
+  .reset-btn{
+    border:none;background:var(--navy);color:#fff;border-radius:8px;
+    padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;
+    font-family:'Segoe UI',system-ui,sans-serif;
+  }
+  .reset-btn:hover{background:var(--navy-2);}
+  .status{
+    max-width:1400px;margin:8px auto 0;padding:0 28px;
+    font-size:12px;color:var(--ink-soft);
+  }
+  .status.err{color:var(--red);font-weight:600;}
+
+  .grid{
+    max-width:1400px;margin:0 auto;padding:18px 28px 60px;
+    display:grid;
+    grid-template-columns:1.3fr 1.3fr 1fr;
+    gap:16px;
+  }
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    border:1px solid var(--line);
+    padding:16px 18px 18px;
+    display:flex;flex-direction:column;
+  }
+  .card h3{
+    font-family:'Segoe UI',system-ui,sans-serif;
+    font-size:14px;margin:0 0 12px;
+    color:var(--navy);
+    display:flex;align-items:center;gap:8px;
+  }
+  .card h3::before{
+    content:"";
+    width:8px;height:8px;border-radius:2px;
+    background:var(--orange);
+    display:inline-block;
+  }
+  .chart-wrap{position:relative;flex:1;min-height:230px;}
+  .span2{grid-column:span 2;}
+  .span3{grid-column:span 3;}
+
+  .feed{
+    max-height:520px;overflow-y:auto;
+    display:flex;flex-direction:column;gap:10px;
+    padding-right:4px;
+  }
+  .feed-item{
+    border-left:3px solid var(--amber);
+    background:#FAFBFC;
+    border-radius:0 8px 8px 0;
+    padding:9px 12px;
+  }
+  .feed-item .meta{
+    display:flex;justify-content:space-between;gap:8px;
+    font-size:11px;color:var(--ink-soft);margin-bottom:4px;
+    font-family:'Consolas','Courier New',monospace;
+  }
+  .feed-item .tag{
+    color:var(--teal);font-weight:700;
+  }
+  .feed-item p{margin:0;font-size:12.5px;line-height:1.45;color:var(--ink);}
+
+  ::-webkit-scrollbar{width:7px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
+
+  @media (max-width:1100px){
+    .grid{grid-template-columns:1fr 1fr;}
+    .span3{grid-column:span 2;}
+  }
+  @media (max-width:680px){
+    .grid{grid-template-columns:1fr;}
+    .span2,.span3{grid-column:span 1;}
+    .topbar{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">SSO</div>
+    <div>
+      <h1>Actos Inseguros</h1>
+      <p>Planta Cuyotenango · Salud y Seguridad Ocupacional</p>
+    </div>
+  </div>
+  <div class="kpi">
+    <div class="num" id="kpiTotal">–</div>
+    <div class="label">Actos reportados</div>
+  </div>
+</div>
+
+<div class="filters">
+  <div class="field">
+    <label for="fMes">Mes</label>
+    <select id="fMes"></select>
+  </div>
+  <div class="field">
+    <label for="fArea">Área</label>
+    <select id="fArea"><option value="">Todas</option></select>
+  </div>
+  <button class="reset-btn" id="resetBtn">Limpiar filtros</button>
+</div>
+<div class="status" id="statusMsg">Cargando datos del archivo BD_Resultados_SSO.xlsx…</div>
+
+<div class="grid" id="mainGrid" style="display:none;">
+  <div class="card">
+    <h3>Actos reportados por área</h3>
+    <div class="chart-wrap"><canvas id="chartReportadaPorArea"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Actos cometidos por área</h3>
+    <div class="chart-wrap"><canvas id="chartCometidosPorArea"></canvas></div>
+  </div>
+  <div class="card span1">
+    <h3>Colaboradores más reportados</h3>
+    <div class="chart-wrap"><canvas id="chartColaboradores"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h3>Principales actos inseguros</h3>
+    <div class="chart-wrap"><canvas id="chartEspecificacion"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Clasificación de actos inseguros</h3>
+    <div class="chart-wrap"><canvas id="chartClasificacion"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Descripción de reportes</h3>
+    <div class="feed" id="feedList"></div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#0E2038','#F2622E','#FFB627','#1B998B','#5B6B7A','#8E7CC3','#E14B4B','#4A90D9','#C9A227','#7FA99B'];
+
+let RAW = [];
+
+function excelDateToISO(v){
+  if (v instanceof Date) return v.toISOString().slice(0,10);
+  if (typeof v === 'number'){
+    const d = XLSX.SSF.parse_date_code(v);
+    if (!d) return null;
+    return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+  }
+  return null;
+}
+
+async function loadData(){
+  const statusEl = document.getElementById('statusMsg');
+  try{
+    const res = await fetch('./BD_Resultados_SSO.xlsx');
+    if (!res.ok) throw new Error('No se encontró el archivo BD_Resultados_SSO.xlsx junto a esta página.');
+    const buf = await res.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array', cellDates:true});
+    const ws = wb.Sheets['Actos Acumulados'];
+    if (!ws) throw new Error('No se encontró la hoja "Actos Acumulados" en el archivo.');
+
+    // headers are on row 4 (index 3), data starts row 5 (index 4)
+    const json = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+    const headerRow = json[3];
+    const idx = {
+      fecha: headerRow.indexOf('FECHA'),
+      area_reportada: headerRow.indexOf('AREA A REPORTAR'),
+      descripcion: headerRow.indexOf('DESCRIPCIÓN'),
+      colaborador: headerRow.indexOf('Colaborador reportado por Acto Inseguro '),
+      clasificacion: headerRow.indexOf('Clasificacion'),
+      especificacion: headerRow.indexOf('Especificación'),
+      reporto: headerRow.indexOf('Reportó:'),
+      area_que_reporta: headerRow.indexOf('Area que reporta'),
+    };
+
+    RAW = json.slice(4).filter(r => r && r[idx.fecha] != null).map(r => {
+      let fechaISO = null;
+      const fv = r[idx.fecha];
+      if (fv instanceof Date) fechaISO = fv.toISOString().slice(0,10);
+      else if (typeof fv === 'number') fechaISO = excelDateToISO(fv);
+      else if (typeof fv === 'string') fechaISO = fv.slice(0,10);
+      return {
+        fecha: fechaISO,
+        area_reportada: r[idx.area_reportada] || 'Sin área',
+        descripcion: r[idx.descripcion] || '',
+        colaborador: r[idx.colaborador] || null,
+        clasificacion: r[idx.clasificacion] || 'Sin clasificación',
+        especificacion: r[idx.especificacion] || 'Sin especificación',
+        reporto: r[idx.reporto] || null,
+        area_que_reporta: r[idx.area_que_reporta] || 'Sin área',
+      };
+    }).filter(r => r.fecha);
+
+    statusEl.style.display = 'none';
+    document.getElementById('mainGrid').style.display = 'grid';
+    initFilters();
+    render();
+  }catch(err){
+    statusEl.textContent = 'Error al cargar los datos: ' + err.message;
+    statusEl.classList.add('err');
+  }
+}
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function initFilters(){
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0-indexed
+
+  // Only offer the current year, from January up to the current month
+  const sel = document.getElementById('fMes');
+  sel.innerHTML = '';
+  const optAll = document.createElement('option');
+  optAll.value = `all-${currentYear}`;
+  optAll.textContent = `Todo ${currentYear}`;
+  sel.appendChild(optAll);
+  for (let m = 0; m <= currentMonth; m++){
+    const opt = document.createElement('option');
+    opt.value = `${currentYear}-${String(m+1).padStart(2,'0')}`;
+    opt.textContent = `${MESES[m]} ${currentYear}`;
+    sel.appendChild(opt);
+  }
+  sel.value = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`; // default: current month
+
+  const areas = [...new Set(RAW.flatMap(r => [r.area_reportada, r.area_que_reporta]))].sort();
+  const areaSel = document.getElementById('fArea');
+  areas.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a; opt.textContent = a;
+    areaSel.appendChild(opt);
+  });
+
+  sel.addEventListener('change', render);
+  areaSel.addEventListener('change', render);
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    sel.value = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+    areaSel.value = '';
+    render();
+  });
+}
+
+function getMonthRange(value){
+  if (value.startsWith('all-')){
+    const year = value.split('-')[1];
+    return { desde: `${year}-01-01`, hasta: `${year}-12-31` };
+  }
+  const [year, month] = value.split('-');
+  const lastDay = new Date(Number(year), Number(month), 0).getDate();
+  return { desde: `${year}-${month}-01`, hasta: `${year}-${month}-${String(lastDay).padStart(2,'0')}` };
+}
+
+function getFiltered(){
+  const mesValue = document.getElementById('fMes').value;
+  const area = document.getElementById('fArea').value;
+  const { desde, hasta } = getMonthRange(mesValue);
+  return RAW.filter(r => {
+    if (r.fecha < desde || r.fecha > hasta) return false;
+    if (area && r.area_reportada !== area && r.area_que_reporta !== area) return false;
+    return true;
+  });
+}
+
+function countBy(rows, key, opts={}){
+  const map = {};
+  rows.forEach(r => {
+    const k = r[key];
+    if (!k || (opts.excludeDash && k === '-')) return;
+    map[k] = (map[k]||0) + 1;
+  });
+  return Object.entries(map).sort((a,b) => b[1]-a[1]);
+}
+
+let charts = {};
+function upsertChart(id, config){
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id), config);
+}
+
+function render(){
+  const rows = getFiltered();
+  document.getElementById('kpiTotal').textContent = rows.length;
+
+  const reportadaPorArea = countBy(rows, 'area_que_reporta').slice(0,12);
+  upsertChart('chartReportadaPorArea', {
+    type:'bar',
+    data:{labels:reportadaPorArea.map(x=>x[0]), datasets:[{data:reportadaPorArea.map(x=>x[1]), backgroundColor:'#F2622E', borderRadius:4}]},
+    options: barOpts()
+  });
+
+  const cometidosPorArea = countBy(rows, 'area_reportada').slice(0,12);
+  upsertChart('chartCometidosPorArea', {
+    type:'bar',
+    data:{labels:cometidosPorArea.map(x=>x[0]), datasets:[{data:cometidosPorArea.map(x=>x[1]), backgroundColor:'#0E2038', borderRadius:4}]},
+    options: barOpts()
+  });
+
+  const colaboradores = countBy(rows, 'colaborador', {excludeDash:true}).slice(0,8);
+  upsertChart('chartColaboradores', {
+    type:'bar',
+    data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#1B998B', borderRadius:4}]},
+    options: {...barOpts(), indexAxis:'y'}
+  });
+
+  const especificacion = countBy(rows, 'especificacion').slice(0,6);
+  upsertChart('chartEspecificacion', {
+    type:'pie',
+    data:{labels:especificacion.map(x=>x[0]), datasets:[{data:especificacion.map(x=>x[1]), backgroundColor:COLORS}]},
+    options: pieOpts()
+  });
+
+  const clasificacion = countBy(rows, 'clasificacion');
+  upsertChart('chartClasificacion', {
+    type:'pie',
+    data:{labels:clasificacion.map(x=>x[0]), datasets:[{data:clasificacion.map(x=>x[1]), backgroundColor:COLORS}]},
+    options: pieOpts()
+  });
+
+  const feed = document.getElementById('feedList');
+  feed.innerHTML = '';
+  rows.slice().sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,60).forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'feed-item';
+    div.innerHTML = `<div class="meta"><span>${r.fecha}</span><span class="tag">${r.area_reportada}</span></div><p>${escapeHtml(r.descripcion)}</p>`;
+    feed.appendChild(div);
+  });
+}
+
+function barOpts(){
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{font:{size:10}}, grid:{display:false}},
+      y:{ticks:{font:{size:10}}, grid:{color:'#EEF0F3'}}
+    }
+  };
+}
+function pieOpts(){
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:10}}}}
+  };
+}
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+loadData();
+</script>
+</body>
+</html>

@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Actos Inseguros · Planta Cuyotenango</title>
-
+<title>Dashboard SSO · Planta Cuyotenango</title>
 <script src="./vendor/xlsx.full.min.js"></script>
 <script src="./vendor/chart.umd.js"></script>
 <style>
@@ -15,6 +14,8 @@
     --amber:#FFB627;
     --teal:#1B998B;
     --red:#E14B4B;
+    --green:#2FA84F;
+    --blue:#4A90D9;
     --bg:#F3F4F7;
     --card:#FFFFFF;
     --ink:#16232F;
@@ -33,28 +34,22 @@
     background:var(--navy);
     background-image:linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
     color:#fff;
-    padding:22px 28px;
+    padding:20px 28px;
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:20px;
     flex-wrap:wrap;
-    border-bottom:3px solid var(--orange);
   }
   .brand{display:flex;align-items:center;gap:14px;}
   .brand-mark{
     width:40px;height:40px;border-radius:10px;
     background:conic-gradient(from 220deg, var(--orange), var(--amber), var(--teal), var(--orange));
     display:flex;align-items:center;justify-content:center;
-    font-family:'Segoe UI',system-ui,sans-serif;font-weight:700;color:var(--navy);font-size:15px;
+    font-weight:700;color:var(--navy);font-size:15px;
     flex-shrink:0;
   }
-  .brand h1{
-    font-family:'Segoe UI',system-ui,sans-serif;
-    font-size:20px;
-    margin:0;
-    letter-spacing:0.2px;
-  }
+  .brand h1{font-size:20px;margin:0;letter-spacing:0.2px;}
   .brand p{margin:2px 0 0;font-size:12px;color:#B9C6D6;letter-spacing:0.4px;text-transform:uppercase;}
   .kpi{
     background:rgba(255,255,255,0.06);
@@ -63,14 +58,23 @@
     padding:10px 22px;
     text-align:right;
   }
-  .kpi .num{
-    font-family:'Consolas','Courier New',monospace;
-    font-size:34px;
-    font-weight:700;
-    color:var(--orange);
-    line-height:1;
-  }
+  .kpi .num{font-family:'Consolas','Courier New',monospace;font-size:34px;font-weight:700;color:var(--orange);line-height:1;}
   .kpi .label{font-size:11px;color:#B9C6D6;text-transform:uppercase;letter-spacing:0.6px;margin-top:4px;}
+
+  .tabs{
+    background:var(--navy-2);
+    border-bottom:3px solid var(--orange);
+    display:flex;flex-wrap:wrap;
+    padding:0 20px;
+  }
+  .tab-btn{
+    background:none;border:none;color:#B9C6D6;
+    padding:13px 18px;font-size:13px;font-weight:600;
+    cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-3px;
+    font-family:inherit;white-space:nowrap;
+  }
+  .tab-btn:hover{color:#fff;}
+  .tab-btn.active{color:#fff;border-bottom-color:var(--orange);}
 
   .filters{
     max-width:1400px;margin:0 auto;
@@ -79,89 +83,59 @@
   }
   .field{display:flex;flex-direction:column;gap:5px;}
   .field label{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);font-weight:600;}
-  .field input, .field select{
-    border:1px solid var(--line);
-    background:#fff;
-    border-radius:8px;
-    padding:8px 10px;
-    font-family:'Segoe UI',system-ui,sans-serif;
-    font-size:13px;
-    color:var(--ink);
-    min-width:150px;
+  .field select{
+    border:1px solid var(--line);background:#fff;border-radius:8px;
+    padding:8px 10px;font-size:13px;color:var(--ink);min-width:170px;
   }
-  .field input:focus, .field select:focus{outline:2px solid var(--orange);outline-offset:1px;}
+  .field select:focus{outline:2px solid var(--orange);outline-offset:1px;}
   .reset-btn{
     border:none;background:var(--navy);color:#fff;border-radius:8px;
     padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;
-    font-family:'Segoe UI',system-ui,sans-serif;
   }
   .reset-btn:hover{background:var(--navy-2);}
-  .status{
-    max-width:1400px;margin:8px auto 0;padding:0 28px;
-    font-size:12px;color:var(--ink-soft);
-  }
+  .status{max-width:1400px;margin:8px auto 0;padding:0 28px;font-size:12px;color:var(--ink-soft);}
   .status.err{color:var(--red);font-weight:600;}
 
   .grid{
     max-width:1400px;margin:0 auto;padding:18px 28px 60px;
-    display:grid;
-    grid-template-columns:1.3fr 1.3fr 1fr;
-    gap:16px;
+    display:grid;grid-template-columns:1.3fr 1.3fr 1fr;gap:16px;
   }
+  .grid.cols2{grid-template-columns:1fr 1fr;}
+  .grid.cols1{grid-template-columns:1fr;}
   .card{
-    background:var(--card);
-    border-radius:14px;
-    border:1px solid var(--line);
-    padding:16px 18px 18px;
-    display:flex;flex-direction:column;
+    background:var(--card);border-radius:14px;border:1px solid var(--line);
+    padding:16px 18px 18px;display:flex;flex-direction:column;
   }
   .card h3{
-    font-family:'Segoe UI',system-ui,sans-serif;
-    font-size:14px;margin:0 0 12px;
-    color:var(--navy);
+    font-size:14px;margin:0 0 12px;color:var(--navy);
     display:flex;align-items:center;gap:8px;
   }
-  .card h3::before{
-    content:"";
-    width:8px;height:8px;border-radius:2px;
-    background:var(--orange);
-    display:inline-block;
-  }
+  .card h3::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--orange);display:inline-block;}
   .chart-wrap{position:relative;flex:1;min-height:230px;}
-  .span2{grid-column:span 2;}
-  .span3{grid-column:span 3;}
+  .chart-wrap.tall{min-height:520px;}
 
-  .feed{
-    max-height:520px;overflow-y:auto;
-    display:flex;flex-direction:column;gap:10px;
-    padding-right:4px;
-  }
-  .feed-item{
-    border-left:3px solid var(--amber);
-    background:#FAFBFC;
-    border-radius:0 8px 8px 0;
-    padding:9px 12px;
-  }
-  .feed-item .meta{
-    display:flex;justify-content:space-between;gap:8px;
-    font-size:11px;color:var(--ink-soft);margin-bottom:4px;
-    font-family:'Consolas','Courier New',monospace;
-  }
-  .feed-item .tag{
-    color:var(--teal);font-weight:700;
-  }
+  .feed{max-height:520px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px;}
+  .feed-item{border-left:3px solid var(--amber);background:#FAFBFC;border-radius:0 8px 8px 0;padding:9px 12px;}
+  .feed-item .meta{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--ink-soft);margin-bottom:4px;font-family:'Consolas','Courier New',monospace;}
+  .feed-item .tag{color:var(--teal);font-weight:700;}
   .feed-item p{margin:0;font-size:12.5px;line-height:1.45;color:var(--ink);}
+
+  table.data-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.data-table th{
+    text-align:left;padding:8px 10px;background:#F7F8FA;color:var(--ink-soft);
+    text-transform:uppercase;font-size:10.5px;letter-spacing:0.4px;position:sticky;top:0;
+  }
+  table.data-table td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:top;}
+  .table-wrap{max-height:520px;overflow-y:auto;}
 
   ::-webkit-scrollbar{width:7px;}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
 
   @media (max-width:1100px){
     .grid{grid-template-columns:1fr 1fr;}
-    .span3{grid-column:span 2;}
   }
   @media (max-width:680px){
-    .grid{grid-template-columns:1fr;}
-    .span2,.span3{grid-column:span 1;}
+    .grid, .grid.cols2{grid-template-columns:1fr;}
     .topbar{flex-direction:column;align-items:flex-start;}
   }
 </style>
@@ -172,14 +146,22 @@
   <div class="brand">
     <div class="brand-mark">SSO</div>
     <div>
-      <h1>Actos Inseguros</h1>
+      <h1 id="pageTitle">Actos Inseguros</h1>
       <p>Planta Cuyotenango · Salud y Seguridad Ocupacional</p>
     </div>
   </div>
   <div class="kpi">
     <div class="num" id="kpiTotal">–</div>
-    <div class="label">Actos reportados</div>
+    <div class="label" id="kpiLabel">Reportes</div>
   </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab-btn active" data-tab="actos">Actos Inseguros</button>
+  <button class="tab-btn" data-tab="resultado">Resultado Actos Inseguros</button>
+  <button class="tab-btn" data-tab="condiciones">Condiciones Inseguras</button>
+  <button class="tab-btn" data-tab="condicionesPersona">Condiciones por Persona</button>
+  <button class="tab-btn" data-tab="recuento">Recuento Actos Inseguros</button>
 </div>
 
 <div class="filters">
@@ -195,38 +177,65 @@
 </div>
 <div class="status" id="statusMsg">Cargando datos del archivo BD_Resultados_SSO.xlsx…</div>
 
-<div class="grid" id="mainGrid" style="display:none;">
-  <div class="card">
-    <h3>Actos reportados por área</h3>
-    <div class="chart-wrap"><canvas id="chartReportadaPorArea"></canvas></div>
-  </div>
-  <div class="card">
-    <h3>Actos cometidos por área</h3>
-    <div class="chart-wrap"><canvas id="chartCometidosPorArea"></canvas></div>
-  </div>
-  <div class="card span1">
-    <h3>Colaboradores más reportados</h3>
-    <div class="chart-wrap"><canvas id="chartColaboradores"></canvas></div>
-  </div>
+<!-- TAB: Actos Inseguros -->
+<div class="grid" id="tab-actos" style="display:none;">
+  <div class="card"><h3>Actos reportados por área</h3><div class="chart-wrap"><canvas id="c_actos_reportadaPorArea"></canvas></div></div>
+  <div class="card"><h3>Actos cometidos por área</h3><div class="chart-wrap"><canvas id="c_actos_cometidosPorArea"></canvas></div></div>
+  <div class="card"><h3>Colaboradores más reportados</h3><div class="chart-wrap"><canvas id="c_actos_colaboradores"></canvas></div></div>
+  <div class="card"><h3>Principales actos inseguros</h3><div class="chart-wrap"><canvas id="c_actos_especificacion"></canvas></div></div>
+  <div class="card"><h3>Clasificación de actos inseguros</h3><div class="chart-wrap"><canvas id="c_actos_clasificacion"></canvas></div></div>
+  <div class="card"><h3>Descripción de reportes</h3><div class="feed" id="f_actos_desc"></div></div>
+</div>
 
+<!-- TAB: Resultado Actos Inseguros -->
+<div class="grid cols2" id="tab-resultado" style="display:none;">
+  <div class="card"><h3>Actos inseguros cometidos por persona</h3><div class="chart-wrap tall"><canvas id="c_resultado_cometidos"></canvas></div></div>
+  <div class="card"><h3>Actos inseguros reportados por persona</h3><div class="chart-wrap tall"><canvas id="c_resultado_reportados"></canvas></div></div>
+</div>
+
+<!-- TAB: Condiciones Inseguras -->
+<div class="grid" id="tab-condiciones" style="display:none;">
+  <div class="card"><h3>Condiciones inseguras reportadas por área</h3><div class="chart-wrap"><canvas id="c_cond_porArea"></canvas></div></div>
+  <div class="card"><h3>Principales reportes de condiciones inseguras</h3><div class="chart-wrap"><canvas id="c_cond_clasificacion"></canvas></div></div>
+  <div class="card"><h3>Colaboradores que más reportan</h3><div class="chart-wrap"><canvas id="c_cond_colaboradores"></canvas></div></div>
+  <div class="card" style="grid-column:span 2;"><h3>Áreas reportadas por condiciones inseguras</h3><div class="chart-wrap"><canvas id="c_cond_areasReportadas"></canvas></div></div>
+  <div class="card"><h3>Descripción</h3><div class="feed" id="f_cond_desc"></div></div>
+</div>
+
+<!-- TAB: Condiciones por Persona -->
+<div class="grid cols1" id="tab-condicionesPersona" style="display:none;">
+  <div class="card"><h3>Condiciones inseguras reportadas por persona</h3><div class="chart-wrap tall"><canvas id="c_condPersona_full"></canvas></div></div>
+</div>
+
+<!-- TAB: Recuento Actos Inseguros -->
+<div class="grid cols2" id="tab-recuento" style="display:none;">
+  <div class="card"><h3>Actos inseguros cometidos por persona</h3><div class="chart-wrap tall"><canvas id="c_recuento_cometidos"></canvas></div></div>
   <div class="card">
-    <h3>Principales actos inseguros</h3>
-    <div class="chart-wrap"><canvas id="chartEspecificacion"></canvas></div>
-  </div>
-  <div class="card">
-    <h3>Clasificación de actos inseguros</h3>
-    <div class="chart-wrap"><canvas id="chartClasificacion"></canvas></div>
-  </div>
-  <div class="card">
-    <h3>Descripción de reportes</h3>
-    <div class="feed" id="feedList"></div>
+    <h3>Recuento de clasificación por clasificación</h3>
+    <div class="chart-wrap"><canvas id="c_recuento_clasificacion"></canvas></div>
+    <h3 style="margin-top:16px;">Descripción</h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Descripción</th><th>Especificación</th><th>Fecha</th></tr></thead>
+        <tbody id="t_recuento_desc"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
 <script>
 const COLORS = ['#0E2038','#F2622E','#FFB627','#1B998B','#5B6B7A','#8E7CC3','#E14B4B','#4A90D9','#C9A227','#7FA99B'];
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-let RAW = [];
+let ACTOS = [];
+let CONDICIONES = [];
+let activeTab = 'actos';
+let charts = {};
+
+function clean(v){
+  if (v == null) return '';
+  return String(v).trim();
+}
 
 function excelDateToISO(v){
   if (v instanceof Date) return v.toISOString().slice(0,10);
@@ -237,6 +246,12 @@ function excelDateToISO(v){
   }
   return null;
 }
+function parseFecha(fv){
+  if (fv instanceof Date) return fv.toISOString().slice(0,10);
+  if (typeof fv === 'number') return excelDateToISO(fv);
+  if (typeof fv === 'string') return fv.slice(0,10);
+  return null;
+}
 
 async function loadData(){
   const statusEl = document.getElementById('statusMsg');
@@ -245,59 +260,76 @@ async function loadData(){
     if (!res.ok) throw new Error('No se encontró el archivo BD_Resultados_SSO.xlsx junto a esta página.');
     const buf = await res.arrayBuffer();
     const wb = XLSX.read(buf, {type:'array', cellDates:true});
-    const ws = wb.Sheets['Actos Acumulados'];
-    if (!ws) throw new Error('No se encontró la hoja "Actos Acumulados" en el archivo.');
 
-    // headers are on row 4 (index 3), data starts row 5 (index 4)
-    const json = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
-    const headerRow = json[3];
-    const idx = {
-      fecha: headerRow.indexOf('FECHA'),
-      area_reportada: headerRow.indexOf('AREA A REPORTAR'),
-      descripcion: headerRow.indexOf('DESCRIPCIÓN'),
-      colaborador: headerRow.indexOf('Colaborador reportado por Acto Inseguro '),
-      clasificacion: headerRow.indexOf('Clasificacion'),
-      especificacion: headerRow.indexOf('Especificación'),
-      reporto: headerRow.indexOf('Reportó:'),
-      area_que_reporta: headerRow.indexOf('Area que reporta'),
+    // ---- Actos Acumulados ----
+    const wsActos = wb.Sheets['Actos Acumulados'];
+    if (!wsActos) throw new Error('No se encontró la hoja "Actos Acumulados".');
+    const jsonActos = XLSX.utils.sheet_to_json(wsActos, {header:1, raw:true, defval:null});
+    const hA = jsonActos[3];
+    const idxA = {
+      fecha: hA.indexOf('FECHA'),
+      area_reportada: hA.indexOf('AREA A REPORTAR'),
+      descripcion: hA.indexOf('DESCRIPCIÓN'),
+      colaborador: hA.indexOf('Colaborador reportado por Acto Inseguro '),
+      clasificacion: hA.indexOf('Clasificacion'),
+      especificacion: hA.indexOf('Especificación'),
+      reporto: hA.indexOf('Reportó:'),
+      area_que_reporta: hA.indexOf('Area que reporta'),
     };
+    ACTOS = jsonActos.slice(4).filter(r => r && r[idxA.fecha] != null).map(r => ({
+      fecha: parseFecha(r[idxA.fecha]),
+      area_reportada: clean(r[idxA.area_reportada]) || 'Sin área',
+      descripcion: clean(r[idxA.descripcion]),
+      colaborador: clean(r[idxA.colaborador]),
+      clasificacion: clean(r[idxA.clasificacion]) || 'Sin clasificación',
+      especificacion: clean(r[idxA.especificacion]) || 'Sin especificación',
+      reporto: clean(r[idxA.reporto]),
+      area_que_reporta: clean(r[idxA.area_que_reporta]) || 'Sin área',
+    })).filter(r => r.fecha);
 
-    RAW = json.slice(4).filter(r => r && r[idx.fecha] != null).map(r => {
-      let fechaISO = null;
-      const fv = r[idx.fecha];
-      if (fv instanceof Date) fechaISO = fv.toISOString().slice(0,10);
-      else if (typeof fv === 'number') fechaISO = excelDateToISO(fv);
-      else if (typeof fv === 'string') fechaISO = fv.slice(0,10);
-      return {
-        fecha: fechaISO,
-        area_reportada: r[idx.area_reportada] || 'Sin área',
-        descripcion: r[idx.descripcion] || '',
-        colaborador: r[idx.colaborador] || null,
-        clasificacion: r[idx.clasificacion] || 'Sin clasificación',
-        especificacion: r[idx.especificacion] || 'Sin especificación',
-        reporto: r[idx.reporto] || null,
-        area_que_reporta: r[idx.area_que_reporta] || 'Sin área',
-      };
-    }).filter(r => r.fecha);
+    // ---- Condiciones Acumuladas ----
+    const wsCond = wb.Sheets['Condiciones Acumuladas'];
+    if (!wsCond) throw new Error('No se encontró la hoja "Condiciones Acumuladas".');
+    const jsonCond = XLSX.utils.sheet_to_json(wsCond, {header:1, raw:true, defval:null});
+    const hC = jsonCond[2];
+    const idxC = {
+      descripcion: hC.indexOf('Descripción'),
+      area_a_reportar: hC.indexOf('Área a la que se reporta'),
+      area_que_reporta: hC.indexOf('Área que realiza el reporte'),
+      persona: hC.indexOf('Persona que reporta'),
+      clasificacion: hC.indexOf('Clasificacion'),
+      fecha: hC.indexOf('Fecha'),
+    };
+    CONDICIONES = jsonCond.slice(3).filter(r => r && r[idxC.fecha] != null).map(r => ({
+      fecha: parseFecha(r[idxC.fecha]),
+      descripcion: clean(r[idxC.descripcion]),
+      area_a_reportar: clean(r[idxC.area_a_reportar]) || 'Sin área',
+      area_que_reporta: clean(r[idxC.area_que_reporta]) || 'Sin área',
+      persona: clean(r[idxC.persona]) || 'Sin nombre',
+      clasificacion: clean(r[idxC.clasificacion]) || 'Sin clasificación',
+    })).filter(r => r.fecha);
 
     statusEl.style.display = 'none';
-    document.getElementById('mainGrid').style.display = 'grid';
     initFilters();
-    render();
+    switchTab('actos');
   }catch(err){
     statusEl.textContent = 'Error al cargar los datos: ' + err.message;
     statusEl.classList.add('err');
   }
 }
 
-const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function currentDataset(){
+  return (activeTab === 'condiciones' || activeTab === 'condicionesPersona') ? CONDICIONES : ACTOS;
+}
+function areaFieldsFor(dataset){
+  return dataset === CONDICIONES ? ['area_a_reportar','area_que_reporta'] : ['area_reportada','area_que_reporta'];
+}
 
 function initFilters(){
   const today = new Date();
   const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth(); // 0-indexed
+  const currentMonth = today.getMonth();
 
-  // Only offer the current year, from January up to the current month
   const sel = document.getElementById('fMes');
   sel.innerHTML = '';
   const optAll = document.createElement('option');
@@ -310,23 +342,36 @@ function initFilters(){
     opt.textContent = `${MESES[m]} ${currentYear}`;
     sel.appendChild(opt);
   }
-  sel.value = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`; // default: current month
+  sel.value = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
 
-  const areas = [...new Set(RAW.flatMap(r => [r.area_reportada, r.area_que_reporta]))].sort();
+  sel.addEventListener('change', render);
+  document.getElementById('fArea').addEventListener('change', render);
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    sel.value = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+    populateAreaOptions();
+    render();
+  });
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  populateAreaOptions();
+}
+
+function populateAreaOptions(){
+  const dataset = currentDataset();
+  const fields = areaFieldsFor(dataset);
+  const areas = [...new Set(dataset.flatMap(r => fields.map(f => r[f])))].filter(Boolean).sort();
   const areaSel = document.getElementById('fArea');
+  const prev = areaSel.value;
+  areaSel.innerHTML = '<option value="">Todas</option>';
   areas.forEach(a => {
     const opt = document.createElement('option');
     opt.value = a; opt.textContent = a;
     areaSel.appendChild(opt);
   });
-
-  sel.addEventListener('change', render);
-  areaSel.addEventListener('change', render);
-  document.getElementById('resetBtn').addEventListener('click', () => {
-    sel.value = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
-    areaSel.value = '';
-    render();
-  });
+  areaSel.value = areas.includes(prev) ? prev : '';
 }
 
 function getMonthRange(value){
@@ -340,14 +385,42 @@ function getMonthRange(value){
 }
 
 function getFiltered(){
+  const dataset = currentDataset();
+  const fields = areaFieldsFor(dataset);
   const mesValue = document.getElementById('fMes').value;
   const area = document.getElementById('fArea').value;
   const { desde, hasta } = getMonthRange(mesValue);
-  return RAW.filter(r => {
+  return dataset.filter(r => {
     if (r.fecha < desde || r.fecha > hasta) return false;
-    if (area && r.area_reportada !== area && r.area_que_reporta !== area) return false;
+    if (area && !fields.some(f => r[f] === area)) return false;
     return true;
   });
+}
+
+const TAB_TITLES = {
+  actos: 'Actos Inseguros',
+  resultado: 'Resultado Actos Inseguros',
+  condiciones: 'Condiciones Inseguras',
+  condicionesPersona: 'Condiciones por Persona',
+  recuento: 'Recuento Actos Inseguros',
+};
+const TAB_KPI_LABEL = {
+  actos: 'Actos reportados',
+  resultado: 'Actos reportados',
+  condiciones: 'Condiciones reportadas',
+  condicionesPersona: 'Condiciones reportadas',
+  recuento: 'Actos reportados',
+};
+
+function switchTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+  document.getElementById('tab-' + tab).style.display = tab === 'resultado' || tab === 'recuento' ? 'grid' : (tab === 'condicionesPersona' ? 'grid' : 'grid');
+  document.getElementById('pageTitle').textContent = TAB_TITLES[tab];
+  document.getElementById('kpiLabel').textContent = TAB_KPI_LABEL[tab];
+  populateAreaOptions();
+  render();
 }
 
 function countBy(rows, key, opts={}){
@@ -357,84 +430,147 @@ function countBy(rows, key, opts={}){
     if (!k || (opts.excludeDash && k === '-')) return;
     map[k] = (map[k]||0) + 1;
   });
-  return Object.entries(map).sort((a,b) => b[1]-a[1]);
+  return Object.entries(map).sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
 }
 
-let charts = {};
 function upsertChart(id, config){
   if (charts[id]) charts[id].destroy();
-  charts[id] = new Chart(document.getElementById(id), config);
+  const el = document.getElementById(id);
+  if (!el) return;
+  charts[id] = new Chart(el, config);
 }
 
-function render(){
-  const rows = getFiltered();
-  document.getElementById('kpiTotal').textContent = rows.length;
-
-  const reportadaPorArea = countBy(rows, 'area_que_reporta').slice(0,12);
-  upsertChart('chartReportadaPorArea', {
-    type:'bar',
-    data:{labels:reportadaPorArea.map(x=>x[0]), datasets:[{data:reportadaPorArea.map(x=>x[1]), backgroundColor:'#F2622E', borderRadius:4}]},
-    options: barOpts()
-  });
-
-  const cometidosPorArea = countBy(rows, 'area_reportada').slice(0,12);
-  upsertChart('chartCometidosPorArea', {
-    type:'bar',
-    data:{labels:cometidosPorArea.map(x=>x[0]), datasets:[{data:cometidosPorArea.map(x=>x[1]), backgroundColor:'#0E2038', borderRadius:4}]},
-    options: barOpts()
-  });
-
-  const colaboradores = countBy(rows, 'colaborador', {excludeDash:true}).slice(0,8);
-  upsertChart('chartColaboradores', {
-    type:'bar',
-    data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#1B998B', borderRadius:4}]},
-    options: {...barOpts(), indexAxis:'y'}
-  });
-
-  const especificacion = countBy(rows, 'especificacion').slice(0,6);
-  upsertChart('chartEspecificacion', {
-    type:'pie',
-    data:{labels:especificacion.map(x=>x[0]), datasets:[{data:especificacion.map(x=>x[1]), backgroundColor:COLORS}]},
-    options: pieOpts()
-  });
-
-  const clasificacion = countBy(rows, 'clasificacion');
-  upsertChart('chartClasificacion', {
-    type:'pie',
-    data:{labels:clasificacion.map(x=>x[0]), datasets:[{data:clasificacion.map(x=>x[1]), backgroundColor:COLORS}]},
-    options: pieOpts()
-  });
-
-  const feed = document.getElementById('feedList');
-  feed.innerHTML = '';
-  rows.slice().sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,60).forEach(r => {
-    const div = document.createElement('div');
-    div.className = 'feed-item';
-    div.innerHTML = `<div class="meta"><span>${r.fecha}</span><span class="tag">${r.area_reportada}</span></div><p>${escapeHtml(r.descripcion)}</p>`;
-    feed.appendChild(div);
-  });
-}
-
-function barOpts(){
+function barOpts(extra={}){
   return {
     responsive:true, maintainAspectRatio:false,
     plugins:{legend:{display:false}},
     scales:{
       x:{ticks:{font:{size:10}}, grid:{display:false}},
       y:{ticks:{font:{size:10}}, grid:{color:'#EEF0F3'}}
-    }
+    },
+    ...extra
   };
 }
 function pieOpts(){
-  return {
-    responsive:true, maintainAspectRatio:false,
-    plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:10}}}}
-  };
+  return { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:10}}}} };
 }
 function escapeHtml(str){
   const d = document.createElement('div');
-  d.textContent = str;
+  d.textContent = str || '';
   return d.innerHTML;
+}
+
+function render(){
+  const rows = getFiltered();
+  document.getElementById('kpiTotal').textContent = rows.length;
+
+  if (activeTab === 'actos') renderActos(rows);
+  else if (activeTab === 'resultado') renderResultado(rows);
+  else if (activeTab === 'condiciones') renderCondiciones(rows);
+  else if (activeTab === 'condicionesPersona') renderCondicionesPersona(rows);
+  else if (activeTab === 'recuento') renderRecuento(rows);
+}
+
+function renderActos(rows){
+  const reportadaPorArea = countBy(rows, 'area_que_reporta').slice(0,12);
+  upsertChart('c_actos_reportadaPorArea', {type:'bar', data:{labels:reportadaPorArea.map(x=>x[0]), datasets:[{data:reportadaPorArea.map(x=>x[1]), backgroundColor:'#F2622E', borderRadius:4}]}, options:barOpts()});
+
+  const cometidosPorArea = countBy(rows, 'area_reportada').slice(0,12);
+  upsertChart('c_actos_cometidosPorArea', {type:'bar', data:{labels:cometidosPorArea.map(x=>x[0]), datasets:[{data:cometidosPorArea.map(x=>x[1]), backgroundColor:'#0E2038', borderRadius:4}]}, options:barOpts()});
+
+  const colaboradores = countBy(rows, 'colaborador', {excludeDash:true}).slice(0,8);
+  upsertChart('c_actos_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#1B998B', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
+
+  const especificacion = countBy(rows, 'especificacion').slice(0,6);
+  upsertChart('c_actos_especificacion', {type:'pie', data:{labels:especificacion.map(x=>x[0]), datasets:[{data:especificacion.map(x=>x[1]), backgroundColor:COLORS}]}, options:pieOpts()});
+
+  const clasificacion = countBy(rows, 'clasificacion');
+  upsertChart('c_actos_clasificacion', {type:'pie', data:{labels:clasificacion.map(x=>x[0]), datasets:[{data:clasificacion.map(x=>x[1]), backgroundColor:COLORS}]}, options:pieOpts()});
+
+  const feed = document.getElementById('f_actos_desc');
+  feed.innerHTML = '';
+  rows.slice().sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,60).forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'feed-item';
+    div.innerHTML = `<div class="meta"><span>${r.fecha}</span><span class="tag">${escapeHtml(r.area_reportada)}</span></div><p>${escapeHtml(r.descripcion)}</p>`;
+    feed.appendChild(div);
+  });
+}
+
+function renderResultado(rows){
+  const cometidos = countBy(rows, 'colaborador', {excludeDash:true});
+  upsertChart('c_resultado_cometidos', {
+    type:'bar',
+    data:{labels:cometidos.map(x=>x[0]), datasets:[{data:cometidos.map(x=>x[1]), backgroundColor:'#E14B4B', borderRadius:3}]},
+    options:barOpts({indexAxis:'y'})
+  });
+
+  const reportados = countBy(rows, 'reporto', {excludeDash:true});
+  upsertChart('c_resultado_reportados', {
+    type:'bar',
+    data:{labels:reportados.map(x=>x[0]), datasets:[{data:reportados.map(x=>x[1]), backgroundColor:'#2FA84F', borderRadius:3}]},
+    options:barOpts({indexAxis:'y'})
+  });
+}
+
+function renderCondiciones(rows){
+  const porArea = countBy(rows, 'area_que_reporta').slice(0,14);
+  upsertChart('c_cond_porArea', {type:'bar', data:{labels:porArea.map(x=>x[0]), datasets:[{data:porArea.map(x=>x[1]), backgroundColor:'#4A90D9', borderRadius:4}]}, options:barOpts()});
+
+  const clasificacion = countBy(rows, 'clasificacion');
+  upsertChart('c_cond_clasificacion', {type:'pie', data:{labels:clasificacion.map(x=>x[0]), datasets:[{data:clasificacion.map(x=>x[1]), backgroundColor:COLORS}]}, options:pieOpts()});
+
+  const colaboradores = countBy(rows, 'persona').slice(0,8);
+  upsertChart('c_cond_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#0E2038', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
+
+  const areasReportadas = countBy(rows, 'area_a_reportar').slice(0,16);
+  upsertChart('c_cond_areasReportadas', {type:'bar', data:{labels:areasReportadas.map(x=>x[0]), datasets:[{data:areasReportadas.map(x=>x[1]), backgroundColor:'#1B998B', borderRadius:4}]}, options:barOpts()});
+
+  const feed = document.getElementById('f_cond_desc');
+  feed.innerHTML = '';
+  rows.slice().sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,60).forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'feed-item';
+    div.innerHTML = `<div class="meta"><span>${r.fecha}</span><span class="tag">${escapeHtml(r.area_a_reportar)}</span></div><p>${escapeHtml(r.descripcion)}</p>`;
+    feed.appendChild(div);
+  });
+}
+
+function renderCondicionesPersona(rows){
+  const personas = countBy(rows, 'persona');
+  const el = document.getElementById('c_condPersona_full');
+  el.parentElement.style.minHeight = Math.max(400, personas.length * 22) + 'px';
+  upsertChart('c_condPersona_full', {
+    type:'bar',
+    data:{labels:personas.map(x=>x[0]), datasets:[{data:personas.map(x=>x[1]), backgroundColor:'#2FA84F', borderRadius:3}]},
+    options:barOpts({indexAxis:'y'})
+  });
+}
+
+function renderRecuento(rows){
+  const cometidos = countBy(rows, 'colaborador', {excludeDash:true});
+  const el = document.getElementById('c_recuento_cometidos');
+  el.parentElement.style.minHeight = Math.max(400, cometidos.length * 20) + 'px';
+  upsertChart('c_recuento_cometidos', {
+    type:'bar',
+    data:{labels:cometidos.map(x=>x[0]), datasets:[{data:cometidos.map(x=>x[1]), backgroundColor:'#E14B4B', borderRadius:3}]},
+    options:barOpts({indexAxis:'y'})
+  });
+
+  const clasificacion = countBy(rows, 'clasificacion');
+  upsertChart('c_recuento_clasificacion', {
+    type:'doughnut',
+    data:{labels:clasificacion.map(x=>x[0]), datasets:[{data:clasificacion.map(x=>x[1]), backgroundColor:COLORS}]},
+    options:pieOpts()
+  });
+
+  const tbody = document.getElementById('t_recuento_desc');
+  tbody.innerHTML = '';
+  rows.slice().sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,200).forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHtml(r.descripcion)}</td><td>${escapeHtml(r.especificacion)}</td><td>${r.fecha}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 
 loadData();

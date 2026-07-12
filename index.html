@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
     --navy:#0E2038;
@@ -185,12 +185,8 @@
 
 <div class="filters">
   <div class="field">
-    <label for="fDesde">Desde</label>
-    <input type="date" id="fDesde">
-  </div>
-  <div class="field">
-    <label for="fHasta">Hasta</label>
-    <input type="date" id="fHasta">
+    <label for="fMes">Mes</label>
+    <select id="fMes"></select>
   </div>
   <div class="field">
     <label for="fArea">Área</label>
@@ -295,37 +291,61 @@ async function loadData(){
   }
 }
 
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
 function initFilters(){
-  const fechas = RAW.map(r => r.fecha).sort();
-  document.getElementById('fDesde').value = fechas[0];
-  document.getElementById('fHasta').value = fechas[fechas.length-1];
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0-indexed
+
+  // Only offer the current year, from January up to the current month
+  const sel = document.getElementById('fMes');
+  sel.innerHTML = '';
+  const optAll = document.createElement('option');
+  optAll.value = `all-${currentYear}`;
+  optAll.textContent = `Todo ${currentYear}`;
+  sel.appendChild(optAll);
+  for (let m = 0; m <= currentMonth; m++){
+    const opt = document.createElement('option');
+    opt.value = `${currentYear}-${String(m+1).padStart(2,'0')}`;
+    opt.textContent = `${MESES[m]} ${currentYear}`;
+    sel.appendChild(opt);
+  }
+  sel.value = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`; // default: current month
 
   const areas = [...new Set(RAW.flatMap(r => [r.area_reportada, r.area_que_reporta]))].sort();
-  const sel = document.getElementById('fArea');
+  const areaSel = document.getElementById('fArea');
   areas.forEach(a => {
     const opt = document.createElement('option');
     opt.value = a; opt.textContent = a;
-    sel.appendChild(opt);
+    areaSel.appendChild(opt);
   });
 
-  document.getElementById('fDesde').addEventListener('change', render);
-  document.getElementById('fHasta').addEventListener('change', render);
-  document.getElementById('fArea').addEventListener('change', render);
+  sel.addEventListener('change', render);
+  areaSel.addEventListener('change', render);
   document.getElementById('resetBtn').addEventListener('click', () => {
-    document.getElementById('fDesde').value = fechas[0];
-    document.getElementById('fHasta').value = fechas[fechas.length-1];
-    document.getElementById('fArea').value = '';
+    sel.value = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+    areaSel.value = '';
     render();
   });
 }
 
+function getMonthRange(value){
+  if (value.startsWith('all-')){
+    const year = value.split('-')[1];
+    return { desde: `${year}-01-01`, hasta: `${year}-12-31` };
+  }
+  const [year, month] = value.split('-');
+  const lastDay = new Date(Number(year), Number(month), 0).getDate();
+  return { desde: `${year}-${month}-01`, hasta: `${year}-${month}-${String(lastDay).padStart(2,'0')}` };
+}
+
 function getFiltered(){
-  const desde = document.getElementById('fDesde').value;
-  const hasta = document.getElementById('fHasta').value;
+  const mesValue = document.getElementById('fMes').value;
   const area = document.getElementById('fArea').value;
+  const { desde, hasta } = getMonthRange(mesValue);
   return RAW.filter(r => {
-    if (desde && r.fecha < desde) return false;
-    if (hasta && r.fecha > hasta) return false;
+    if (r.fecha < desde || r.fecha > hasta) return false;
     if (area && r.area_reportada !== area && r.area_que_reporta !== area) return false;
     return true;
   });

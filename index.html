@@ -139,6 +139,35 @@
   ::-webkit-scrollbar{width:7px;}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
 
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(14,20,28,0.55);
+    z-index:100;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:#fff;border-radius:14px;max-width:640px;width:100%;
+    max-height:82vh;display:flex;flex-direction:column;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-head{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+    padding:20px 22px 14px;border-bottom:1px solid var(--line);
+  }
+  .modal-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);font-weight:700;margin-bottom:3px;}
+  .modal-head h2{margin:0;font-size:19px;color:var(--navy);}
+  .modal-close{
+    background:none;border:none;font-size:26px;line-height:1;color:var(--ink-soft);
+    cursor:pointer;padding:0 4px;
+  }
+  .modal-close:hover{color:var(--ink);}
+  .modal-body{padding:16px 22px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+  .modal-empty{color:var(--ink-soft);font-size:13px;padding:20px 0;text-align:center;}
+  .modal-item{border-left:3px solid var(--brand-blue);background:#F7F9FC;border-radius:0 8px 8px 0;padding:11px 14px;}
+  .modal-item .meta{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--ink-soft);margin-bottom:5px;font-family:'Consolas','Courier New',monospace;flex-wrap:wrap;}
+  .modal-item .meta .tag{color:var(--brand-blue);font-weight:700;font-family:inherit;}
+  .modal-item .meta .tag2{color:var(--red);font-weight:700;font-family:inherit;}
+  .modal-item p{margin:0;font-size:13px;line-height:1.5;color:var(--ink);}
+
   @media (max-width:1100px){
     .grid{grid-template-columns:1fr 1fr;}
   }
@@ -228,6 +257,19 @@
         <tbody id="t_recuento_desc"></tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="personModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-eyebrow" id="modalEyebrow">Detalle</div>
+        <h2 id="modalName">—</h2>
+      </div>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
 
@@ -468,6 +510,50 @@ function escapeHtml(str){
   return d.innerHTML;
 }
 
+// ---- Person detail modal ----
+const modalEl = document.getElementById('personModal');
+document.getElementById('modalClose').addEventListener('click', closeModal);
+modalEl.addEventListener('click', (e) => { if (e.target === modalEl) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+function closeModal(){ modalEl.classList.remove('open'); }
+
+function openPersonModal({ name, eyebrow, entries, kind }){
+  document.getElementById('modalEyebrow').textContent = eyebrow;
+  document.getElementById('modalName').textContent = name;
+  const body = document.getElementById('modalBody');
+  body.innerHTML = '';
+  if (!entries.length){
+    body.innerHTML = '<div class="modal-empty">No hay registros para esta persona en el periodo/área seleccionados.</div>';
+  } else {
+    entries.slice().sort((a,b) => b.fecha.localeCompare(a.fecha)).forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'modal-item';
+      if (kind === 'actos'){
+        div.innerHTML = `<div class="meta"><span>${r.fecha}</span><span class="tag">${escapeHtml(r.area_reportada)}</span><span class="tag2">${escapeHtml(r.clasificacion)}</span></div><p>${escapeHtml(r.descripcion)}</p>`;
+      } else {
+        div.innerHTML = `<div class="meta"><span>${r.fecha}</span><span class="tag">${escapeHtml(r.area_a_reportar)}</span><span class="tag2">${escapeHtml(r.clasificacion)}</span></div><p>${escapeHtml(r.descripcion)}</p>`;
+      }
+      body.appendChild(div);
+    });
+  }
+  modalEl.classList.add('open');
+}
+
+// Attaches a click handler to a bar/horizontal-bar chart so clicking a bar
+// opens the detail modal for that person's records.
+function onPersonBarClick(chart, labels, sourceRows, field, eyebrow, kind){
+  chart.canvas.onclick = (evt) => {
+    const points = chart.getElementsAtEventForMode(evt, 'nearest', {intersect:true}, false);
+    if (!points.length) return;
+    const idx = points[0].index;
+    const name = labels[idx];
+    if (!name) return;
+    const entries = sourceRows.filter(r => r[field] === name);
+    openPersonModal({ name, eyebrow, entries, kind });
+  };
+  chart.canvas.style.cursor = 'pointer';
+}
+
 function render(){
   const rows = getFiltered();
   document.getElementById('kpiTotal').textContent = rows.length;
@@ -488,6 +574,7 @@ function renderActos(rows){
 
   const colaboradores = countBy(rows, 'colaborador', {excludeDash:true}).slice(0,8);
   upsertChart('c_actos_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
+  onPersonBarClick(charts['c_actos_colaboradores'], colaboradores.map(x=>x[0]), rows, 'colaborador', 'Actos inseguros cometidos', 'actos');
 
   const especificacion = countBy(rows, 'especificacion').slice(0,6);
   upsertChart('c_actos_especificacion', {type:'pie', data:{labels:especificacion.map(x=>x[0]), datasets:[{data:especificacion.map(x=>x[1]), backgroundColor:COLORS}]}, options:pieOpts()});
@@ -512,6 +599,7 @@ function renderResultado(rows){
     data:{labels:cometidos.map(x=>x[0]), datasets:[{data:cometidos.map(x=>x[1]), backgroundColor:'#E32934', borderRadius:3}]},
     options:barOpts({indexAxis:'y'})
   });
+  onPersonBarClick(charts['c_resultado_cometidos'], cometidos.map(x=>x[0]), rows, 'colaborador', 'Actos inseguros cometidos', 'actos');
 
   const reportados = countBy(rows, 'reporto', {excludeDash:true});
   upsertChart('c_resultado_reportados', {
@@ -519,6 +607,7 @@ function renderResultado(rows){
     data:{labels:reportados.map(x=>x[0]), datasets:[{data:reportados.map(x=>x[1]), backgroundColor:'#0077C8', borderRadius:3}]},
     options:barOpts({indexAxis:'y'})
   });
+  onPersonBarClick(charts['c_resultado_reportados'], reportados.map(x=>x[0]), rows, 'reporto', 'Actos inseguros reportados', 'actos');
 }
 
 function renderCondiciones(rows){
@@ -530,6 +619,7 @@ function renderCondiciones(rows){
 
   const colaboradores = countBy(rows, 'persona').slice(0,8);
   upsertChart('c_cond_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#2E3B47', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
+  onPersonBarClick(charts['c_cond_colaboradores'], colaboradores.map(x=>x[0]), rows, 'persona', 'Condiciones inseguras reportadas', 'condiciones');
 
   const areasReportadas = countBy(rows, 'area_a_reportar').slice(0,16);
   upsertChart('c_cond_areasReportadas', {type:'bar', data:{labels:areasReportadas.map(x=>x[0]), datasets:[{data:areasReportadas.map(x=>x[1]), backgroundColor:'#5FC1E8', borderRadius:4}]}, options:barOpts()});
@@ -553,6 +643,7 @@ function renderCondicionesPersona(rows){
     data:{labels:personas.map(x=>x[0]), datasets:[{data:personas.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:3}]},
     options:barOpts({indexAxis:'y'})
   });
+  onPersonBarClick(charts['c_condPersona_full'], personas.map(x=>x[0]), rows, 'persona', 'Condiciones inseguras reportadas', 'condiciones');
 }
 
 function renderRecuento(rows){
@@ -564,6 +655,7 @@ function renderRecuento(rows){
     data:{labels:cometidos.map(x=>x[0]), datasets:[{data:cometidos.map(x=>x[1]), backgroundColor:'#E32934', borderRadius:3}]},
     options:barOpts({indexAxis:'y'})
   });
+  onPersonBarClick(charts['c_recuento_cometidos'], cometidos.map(x=>x[0]), rows, 'colaborador', 'Actos inseguros cometidos', 'actos');
 
   const clasificacion = countBy(rows, 'clasificacion');
   upsertChart('c_recuento_clasificacion', {

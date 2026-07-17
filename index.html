@@ -100,6 +100,17 @@
   .status{max-width:1400px;margin:8px auto 0;padding:0 28px;font-size:12px;color:var(--ink-soft);}
   .status.err{color:var(--red);font-weight:600;}
 
+  .update-badge{
+    margin-left:auto;
+    display:flex;align-items:center;gap:8px;
+    background:#EAF6EF;border:1px solid #BFE6CC;color:#1E6B3A;
+    border-radius:8px;padding:9px 14px;font-size:12px;font-weight:600;
+    letter-spacing:0.2px;
+  }
+  .update-badge .dot{width:8px;height:8px;border-radius:50%;background:#2FA84F;flex-shrink:0;}
+  .update-badge strong{font-weight:700;}
+  @media (max-width:900px){ .update-badge{margin-left:0;} }
+
   .grid{
     max-width:1400px;margin:0 auto;padding:20px 28px 60px;
     display:grid;grid-template-columns:1.3fr 1.3fr 1fr;gap:18px;
@@ -211,6 +222,10 @@
     <select id="fArea"><option value="">Todas</option></select>
   </div>
   <button class="reset-btn" id="resetBtn">Limpiar filtros</button>
+  <div class="update-badge" id="updateBadge" style="display:none;">
+    <span class="dot"></span>
+    <span>ACTUALIZADO A FECHA: <strong id="updateDate">—</strong></span>
+  </div>
 </div>
 <div class="status" id="statusMsg">Cargando datos del archivo BD_Resultados_SSO.xlsx…</div>
 
@@ -360,12 +375,24 @@ async function loadData(){
     })).filter(r => r.fecha);
 
     statusEl.style.display = 'none';
+    showUpdateBadge();
     initFilters();
     switchTab('actos');
   }catch(err){
     statusEl.textContent = 'Error al cargar los datos: ' + err.message;
     statusEl.classList.add('err');
   }
+}
+
+const MESES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function showUpdateBadge(){
+  const allFechas = [...ACTOS.map(r=>r.fecha), ...CONDICIONES.map(r=>r.fecha)].filter(Boolean);
+  if (!allFechas.length) return;
+  const maxFecha = allFechas.reduce((a,b) => a > b ? a : b);
+  const [y,m,d] = maxFecha.split('-').map(Number);
+  const texto = `${d} de ${MESES_LARGO[m-1]} de ${y}`;
+  document.getElementById('updateDate').textContent = texto;
+  document.getElementById('updateBadge').style.display = 'flex';
 }
 
 function currentDataset(){

@@ -399,7 +399,7 @@ function currentDataset(){
   return (activeTab === 'condiciones' || activeTab === 'condicionesPersona') ? CONDICIONES : ACTOS;
 }
 function areaFieldsFor(dataset){
-  return dataset === CONDICIONES ? ['area_a_reportar','area_que_reporta'] : ['area_reportada','area_que_reporta'];
+  return dataset === CONDICIONES ? ['area_a_reportar'] : ['area_reportada'];
 }
 
 function initFilters(){

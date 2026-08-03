@@ -517,15 +517,63 @@ function upsertChart(id, config){
   charts[id] = new Chart(el, config);
 }
 
+// Draws the raw integer value next to/above each bar so every value is
+// readable at a glance, even when many bars share the same small value.
+const valueLabelPlugin = {
+  id: 'valueLabels',
+  afterDatasetsDraw(chart){
+    if (chart.config.type !== 'bar') return;
+    const { ctx } = chart;
+    ctx.save();
+    ctx.font = '600 11px Segoe UI, system-ui, sans-serif';
+    ctx.fillStyle = '#16232F';
+    const horiz = chart.options.indexAxis === 'y';
+    chart.data.datasets.forEach((dataset, dsIndex) => {
+      const meta = chart.getDatasetMeta(dsIndex);
+      meta.data.forEach((bar, i) => {
+        const value = dataset.data[i];
+        if (value == null) return;
+        const label = Math.round(value).toString();
+        if (horiz){
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, bar.x + 6, bar.y);
+        } else {
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(label, bar.x, bar.y - 5);
+        }
+      });
+    });
+    ctx.restore();
+  }
+};
+Chart.register(valueLabelPlugin);
+
 function barOpts(extra={}){
+  const indexAxis = extra.indexAxis || 'x';
+  const horiz = indexAxis === 'y';
+  // value axis: always whole numbers (no 0.2/0.4/0.6 style ticks)
+  const valueScale = { beginAtZero:true, ticks:{font:{size:10}, precision:0}, grid:{display:!horiz, color:'#EEF0F3'} };
+  // category (name) axis: never hide/skip a label, no matter how many there are
+  const categoryScale = { ticks:{font:{size:10}, autoSkip:false, maxRotation: horiz ? 0 : 55, minRotation: horiz ? 0 : 45}, grid:{display:false} };
+  const scales = horiz ? { x:valueScale, y:categoryScale } : { x:categoryScale, y:valueScale };
+
+  // shallow-merge any custom per-axis overrides passed in via extra.scales
+  if (extra.scales){
+    for (const axis of ['x','y']){
+      if (extra.scales[axis]){
+        scales[axis] = { ...scales[axis], ...extra.scales[axis], ticks:{...scales[axis].ticks, ...(extra.scales[axis].ticks||{})} };
+      }
+    }
+  }
+
   return {
     responsive:true, maintainAspectRatio:false,
-    plugins:{legend:{display:false}},
-    scales:{
-      x:{ticks:{font:{size:10}}, grid:{display:false}},
-      y:{ticks:{font:{size:10}}, grid:{color:'#EEF0F3'}}
-    },
-    ...extra
+    indexAxis,
+    layout:{ padding: horiz ? {right:36} : {top:22} },
+    plugins:{legend:{display:false}, ...(extra.plugins||{})},
+    scales,
   };
 }
 function pieOpts(){
@@ -621,6 +669,8 @@ function renderActos(rows){
 
 function renderResultado(rows){
   const cometidos = countBy(rows, 'colaborador', {excludeDash:true});
+  const elC = document.getElementById('c_resultado_cometidos');
+  elC.parentElement.style.minHeight = Math.max(400, cometidos.length * 22) + 'px';
   upsertChart('c_resultado_cometidos', {
     type:'bar',
     data:{labels:cometidos.map(x=>x[0]), datasets:[{data:cometidos.map(x=>x[1]), backgroundColor:'#E32934', borderRadius:3}]},
@@ -629,6 +679,8 @@ function renderResultado(rows){
   onPersonBarClick(charts['c_resultado_cometidos'], cometidos.map(x=>x[0]), rows, 'colaborador', 'Actos inseguros cometidos', 'actos');
 
   const reportados = countBy(rows, 'reporto', {excludeDash:true});
+  const elR = document.getElementById('c_resultado_reportados');
+  elR.parentElement.style.minHeight = Math.max(400, reportados.length * 22) + 'px';
   upsertChart('c_resultado_reportados', {
     type:'bar',
     data:{labels:reportados.map(x=>x[0]), datasets:[{data:reportados.map(x=>x[1]), backgroundColor:'#0077C8', borderRadius:3}]},
@@ -676,7 +728,7 @@ function renderCondicionesPersona(rows){
 function renderRecuento(rows){
   const cometidos = countBy(rows, 'colaborador', {excludeDash:true});
   const el = document.getElementById('c_recuento_cometidos');
-  el.parentElement.style.minHeight = Math.max(400, cometidos.length * 20) + 'px';
+  el.parentElement.style.minHeight = Math.max(400, cometidos.length * 22) + 'px';
   upsertChart('c_recuento_cometidos', {
     type:'bar',
     data:{labels:cometidos.map(x=>x[0]), datasets:[{data:cometidos.map(x=>x[1]), backgroundColor:'#E32934', borderRadius:3}]},

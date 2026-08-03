@@ -398,8 +398,17 @@ function showUpdateBadge(){
 function currentDataset(){
   return (activeTab === 'condiciones' || activeTab === 'condicionesPersona') ? CONDICIONES : ACTOS;
 }
+// Both "roles" an area can play in a record (e.g. the act's own area, and the
+// area of whoever reported it). Used to populate the dropdown and for the
+// general "touches this area in any way" filter.
 function areaFieldsFor(dataset){
-  return dataset === CONDICIONES ? ['area_a_reportar'] : ['area_reportada'];
+  return dataset === CONDICIONES ? ['area_a_reportar','area_que_reporta'] : ['area_reportada','area_que_reporta'];
+}
+// Narrows rows to a single specific field match — used for person-level
+// charts, where we want the person's OWN area, not "any role touching it".
+function filterByField(rows, field, area){
+  if (!area) return rows;
+  return rows.filter(r => r[field] === area);
 }
 
 function initFilters(){
@@ -641,15 +650,18 @@ function render(){
 }
 
 function renderActos(rows){
+  const areaSel = document.getElementById('fArea').value;
+
   const reportadaPorArea = countBy(rows, 'area_que_reporta').slice(0,12);
   upsertChart('c_actos_reportadaPorArea', {type:'bar', data:{labels:reportadaPorArea.map(x=>x[0]), datasets:[{data:reportadaPorArea.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:4}]}, options:barOpts()});
 
   const cometidosPorArea = countBy(rows, 'area_reportada').slice(0,12);
   upsertChart('c_actos_cometidosPorArea', {type:'bar', data:{labels:cometidosPorArea.map(x=>x[0]), datasets:[{data:cometidosPorArea.map(x=>x[1]), backgroundColor:'#2E3B47', borderRadius:4}]}, options:barOpts()});
 
-  const colaboradores = countBy(rows, 'colaborador', {excludeDash:true}).slice(0,8);
+  const rowsColaboradores = filterByField(rows, 'area_reportada', areaSel);
+  const colaboradores = countBy(rowsColaboradores, 'colaborador', {excludeDash:true}).slice(0,8);
   upsertChart('c_actos_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
-  onPersonBarClick(charts['c_actos_colaboradores'], colaboradores.map(x=>x[0]), rows, 'colaborador', 'Actos inseguros cometidos', 'actos');
+  onPersonBarClick(charts['c_actos_colaboradores'], colaboradores.map(x=>x[0]), rowsColaboradores, 'colaborador', 'Actos inseguros cometidos', 'actos');
 
   const especificacion = countBy(rows, 'especificacion').slice(0,6);
   upsertChart('c_actos_especificacion', {type:'pie', data:{labels:especificacion.map(x=>x[0]), datasets:[{data:especificacion.map(x=>x[1]), backgroundColor:COLORS}]}, options:pieOpts()});
@@ -668,7 +680,10 @@ function renderActos(rows){
 }
 
 function renderResultado(rows){
-  const cometidos = countBy(rows, 'colaborador', {excludeDash:true});
+  const areaSel = document.getElementById('fArea').value;
+
+  const rowsCometidos = filterByField(rows, 'area_reportada', areaSel);
+  const cometidos = countBy(rowsCometidos, 'colaborador', {excludeDash:true});
   const elC = document.getElementById('c_resultado_cometidos');
   elC.parentElement.style.minHeight = Math.max(400, cometidos.length * 22) + 'px';
   upsertChart('c_resultado_cometidos', {
@@ -676,9 +691,10 @@ function renderResultado(rows){
     data:{labels:cometidos.map(x=>x[0]), datasets:[{data:cometidos.map(x=>x[1]), backgroundColor:'#E32934', borderRadius:3}]},
     options:barOpts({indexAxis:'y'})
   });
-  onPersonBarClick(charts['c_resultado_cometidos'], cometidos.map(x=>x[0]), rows, 'colaborador', 'Actos inseguros cometidos', 'actos');
+  onPersonBarClick(charts['c_resultado_cometidos'], cometidos.map(x=>x[0]), rowsCometidos, 'colaborador', 'Actos inseguros cometidos', 'actos');
 
-  const reportados = countBy(rows, 'reporto', {excludeDash:true});
+  const rowsReportados = filterByField(rows, 'area_que_reporta', areaSel);
+  const reportados = countBy(rowsReportados, 'reporto', {excludeDash:true});
   const elR = document.getElementById('c_resultado_reportados');
   elR.parentElement.style.minHeight = Math.max(400, reportados.length * 22) + 'px';
   upsertChart('c_resultado_reportados', {
@@ -686,19 +702,22 @@ function renderResultado(rows){
     data:{labels:reportados.map(x=>x[0]), datasets:[{data:reportados.map(x=>x[1]), backgroundColor:'#0077C8', borderRadius:3}]},
     options:barOpts({indexAxis:'y'})
   });
-  onPersonBarClick(charts['c_resultado_reportados'], reportados.map(x=>x[0]), rows, 'reporto', 'Actos inseguros reportados', 'actos');
+  onPersonBarClick(charts['c_resultado_reportados'], reportados.map(x=>x[0]), rowsReportados, 'reporto', 'Actos inseguros reportados', 'actos');
 }
 
 function renderCondiciones(rows){
+  const areaSel = document.getElementById('fArea').value;
+
   const porArea = countBy(rows, 'area_que_reporta').slice(0,14);
   upsertChart('c_cond_porArea', {type:'bar', data:{labels:porArea.map(x=>x[0]), datasets:[{data:porArea.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:4}]}, options:barOpts()});
 
   const clasificacion = countBy(rows, 'clasificacion');
   upsertChart('c_cond_clasificacion', {type:'pie', data:{labels:clasificacion.map(x=>x[0]), datasets:[{data:clasificacion.map(x=>x[1]), backgroundColor:COLORS}]}, options:pieOpts()});
 
-  const colaboradores = countBy(rows, 'persona').slice(0,8);
+  const rowsColaboradores = filterByField(rows, 'area_que_reporta', areaSel);
+  const colaboradores = countBy(rowsColaboradores, 'persona').slice(0,8);
   upsertChart('c_cond_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#2E3B47', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
-  onPersonBarClick(charts['c_cond_colaboradores'], colaboradores.map(x=>x[0]), rows, 'persona', 'Condiciones inseguras reportadas', 'condiciones');
+  onPersonBarClick(charts['c_cond_colaboradores'], colaboradores.map(x=>x[0]), rowsColaboradores, 'persona', 'Condiciones inseguras reportadas', 'condiciones');
 
   const areasReportadas = countBy(rows, 'area_a_reportar').slice(0,16);
   upsertChart('c_cond_areasReportadas', {type:'bar', data:{labels:areasReportadas.map(x=>x[0]), datasets:[{data:areasReportadas.map(x=>x[1]), backgroundColor:'#5FC1E8', borderRadius:4}]}, options:barOpts()});
@@ -714,7 +733,9 @@ function renderCondiciones(rows){
 }
 
 function renderCondicionesPersona(rows){
-  const personas = countBy(rows, 'persona');
+  const areaSel = document.getElementById('fArea').value;
+  const rowsFiltered = filterByField(rows, 'area_que_reporta', areaSel);
+  const personas = countBy(rowsFiltered, 'persona');
   const el = document.getElementById('c_condPersona_full');
   el.parentElement.style.minHeight = Math.max(400, personas.length * 22) + 'px';
   upsertChart('c_condPersona_full', {
@@ -722,11 +743,13 @@ function renderCondicionesPersona(rows){
     data:{labels:personas.map(x=>x[0]), datasets:[{data:personas.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:3}]},
     options:barOpts({indexAxis:'y'})
   });
-  onPersonBarClick(charts['c_condPersona_full'], personas.map(x=>x[0]), rows, 'persona', 'Condiciones inseguras reportadas', 'condiciones');
+  onPersonBarClick(charts['c_condPersona_full'], personas.map(x=>x[0]), rowsFiltered, 'persona', 'Condiciones inseguras reportadas', 'condiciones');
 }
 
 function renderRecuento(rows){
-  const cometidos = countBy(rows, 'colaborador', {excludeDash:true});
+  const areaSel = document.getElementById('fArea').value;
+  const rowsCometidos = filterByField(rows, 'area_reportada', areaSel);
+  const cometidos = countBy(rowsCometidos, 'colaborador', {excludeDash:true});
   const el = document.getElementById('c_recuento_cometidos');
   el.parentElement.style.minHeight = Math.max(400, cometidos.length * 22) + 'px';
   upsertChart('c_recuento_cometidos', {
@@ -734,7 +757,7 @@ function renderRecuento(rows){
     data:{labels:cometidos.map(x=>x[0]), datasets:[{data:cometidos.map(x=>x[1]), backgroundColor:'#E32934', borderRadius:3}]},
     options:barOpts({indexAxis:'y'})
   });
-  onPersonBarClick(charts['c_recuento_cometidos'], cometidos.map(x=>x[0]), rows, 'colaborador', 'Actos inseguros cometidos', 'actos');
+  onPersonBarClick(charts['c_recuento_cometidos'], cometidos.map(x=>x[0]), rowsCometidos, 'colaborador', 'Actos inseguros cometidos', 'actos');
 
   const clasificacion = countBy(rows, 'clasificacion');
   upsertChart('c_recuento_clasificacion', {

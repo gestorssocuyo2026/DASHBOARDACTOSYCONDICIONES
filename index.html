@@ -652,10 +652,10 @@ function render(){
 function renderActos(rows){
   const areaSel = document.getElementById('fArea').value;
 
-  const reportadaPorArea = countBy(rows, 'area_que_reporta').slice(0,12);
+  const reportadaPorArea = countBy(filterByField(rows, 'area_que_reporta', areaSel), 'area_que_reporta').slice(0,12);
   upsertChart('c_actos_reportadaPorArea', {type:'bar', data:{labels:reportadaPorArea.map(x=>x[0]), datasets:[{data:reportadaPorArea.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:4}]}, options:barOpts()});
 
-  const cometidosPorArea = countBy(rows, 'area_reportada').slice(0,12);
+  const cometidosPorArea = countBy(filterByField(rows, 'area_reportada', areaSel), 'area_reportada').slice(0,12);
   upsertChart('c_actos_cometidosPorArea', {type:'bar', data:{labels:cometidosPorArea.map(x=>x[0]), datasets:[{data:cometidosPorArea.map(x=>x[1]), backgroundColor:'#2E3B47', borderRadius:4}]}, options:barOpts()});
 
   const rowsColaboradores = filterByField(rows, 'area_reportada', areaSel);
@@ -708,7 +708,7 @@ function renderResultado(rows){
 function renderCondiciones(rows){
   const areaSel = document.getElementById('fArea').value;
 
-  const porArea = countBy(rows, 'area_que_reporta').slice(0,14);
+  const porArea = countBy(filterByField(rows, 'area_que_reporta', areaSel), 'area_que_reporta').slice(0,14);
   upsertChart('c_cond_porArea', {type:'bar', data:{labels:porArea.map(x=>x[0]), datasets:[{data:porArea.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:4}]}, options:barOpts()});
 
   const clasificacion = countBy(rows, 'clasificacion');
@@ -719,7 +719,7 @@ function renderCondiciones(rows){
   upsertChart('c_cond_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#2E3B47', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
   onPersonBarClick(charts['c_cond_colaboradores'], colaboradores.map(x=>x[0]), rowsColaboradores, 'persona', 'Condiciones inseguras reportadas', 'condiciones');
 
-  const areasReportadas = countBy(rows, 'area_a_reportar').slice(0,16);
+  const areasReportadas = countBy(filterByField(rows, 'area_a_reportar', areaSel), 'area_a_reportar').slice(0,16);
   upsertChart('c_cond_areasReportadas', {type:'bar', data:{labels:areasReportadas.map(x=>x[0]), datasets:[{data:areasReportadas.map(x=>x[1]), backgroundColor:'#5FC1E8', borderRadius:4}]}, options:barOpts()});
 
   const feed = document.getElementById('f_cond_desc');

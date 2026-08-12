@@ -210,6 +210,7 @@
   <button class="tab-btn" data-tab="condiciones">Condiciones Inseguras</button>
   <button class="tab-btn" data-tab="condicionesPersona">Condiciones por Persona</button>
   <button class="tab-btn" data-tab="recuento">Recuento Actos Inseguros</button>
+  <button class="tab-btn" data-tab="nivelSeguridad">Nivel de Seguridad</button>
 </div>
 
 <div class="filters">
@@ -271,6 +272,73 @@
         <thead><tr><th>Descripción</th><th>Especificación</th><th>Fecha</th></tr></thead>
         <tbody id="t_recuento_desc"></tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: Nivel de Seguridad -->
+<div class="grid cols1" id="tab-nivelSeguridad" style="display:none;">
+  <div class="card" id="nsNoData" style="display:none;">
+    <h3>Nivel de Seguridad</h3>
+    <div class="modal-empty">
+      No se encontró el archivo <strong>NUEVO_NIVEL_DE_SEGURIDAD_2026_CBC-CUYOTENANGO.xlsx</strong> junto a esta página.
+      Súbelo a la raíz del repositorio (mismo lugar que BD_Resultados_SSO.xlsx) con ese nombre exacto para activar esta pestaña.
+    </div>
+  </div>
+
+  <div id="nsContent" style="display:none;">
+    <div class="card" style="margin-bottom:18px;">
+      <div class="field" style="min-width:220px;">
+        <label for="fNsMes">Mes</label>
+        <select id="fNsMes"></select>
+      </div>
+    </div>
+
+    <div class="grid" style="padding:0;margin:0 0 18px;grid-template-columns:1fr 1fr 1fr 1fr;">
+      <div class="card">
+        <h3>Nivel de seguridad — planta</h3>
+        <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
+          <div id="nsPlantaBadge" style="text-align:center;">
+            <div style="font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;" id="nsPlantaPct">–</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Áreas en verde</h3>
+        <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
+          <div style="font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;color:#2FA84F;" id="nsVerde">–</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Áreas en amarillo</h3>
+        <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
+          <div style="font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;color:#C99A1E;" id="nsAmarillo">–</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Áreas en rojo</h3>
+        <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
+          <div style="font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;color:var(--red);" id="nsRojo">–</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <h3>Nivel de seguridad por área</h3>
+      <div class="chart-wrap tall"><canvas id="c_ns_porArea"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3>Detalle por categoría</h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr>
+            <th>Área</th><th>Auto Evaluaciones</th><th>Evaluación Cruzada</th><th>Inspección SSO</th>
+            <th>Capacitaciones</th><th>Acciones Correctivas</th><th>Actos y Condiciones</th><th>Accidentabilidad</th><th>Nivel de Seguridad</th>
+          </tr></thead>
+          <tbody id="t_ns_detalle"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -376,11 +444,66 @@ async function loadData(){
 
     statusEl.style.display = 'none';
     showUpdateBadge();
+    await loadNivelSeguridadData();
     initFilters();
     switchTab('actos');
   }catch(err){
     statusEl.textContent = 'Error al cargar los datos: ' + err.message;
     statusEl.classList.add('err');
+  }
+}
+
+let NS_PERIODS = []; // [{mes, areas:[{area, autoEval, evalCruzada, inspeccion, capacitaciones, acciones, actosCondiciones, accidentabilidad, nivel}], plantTotal}]
+const NS_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+async function loadNivelSeguridadData(){
+  try{
+    const res = await fetch('./NUEVO_NIVEL_DE_SEGURIDAD_2026_CBC-CUYOTENANGO.xlsx');
+    if (!res.ok) return; // optional file, skip silently if not present yet
+    const buf = await res.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array', cellDates:true});
+
+    const periods = [];
+    NS_MESES.forEach(mes => {
+      const sheetName = 'Captura ' + mes;
+      const ws = wb.Sheets[sheetName];
+      if (!ws) return;
+      const json = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+
+      // find the tablero header row: the one containing 'Área' as first non-null cell
+      let headerRow = -1, startCol = -1;
+      for (let r = 0; r < json.length; r++){
+        const row = json[r];
+        if (!row) continue;
+        const c = row.indexOf('Área');
+        if (c >= 0){ headerRow = r; startCol = c; break; }
+      }
+      if (headerRow < 0) return;
+
+      const areas = [];
+      let plantTotal = null;
+      let r = headerRow + 1;
+      while (r < json.length && json[r] && json[r][startCol]){
+        const area = json[r][startCol];
+        const vals = json[r].slice(startCol+1, startCol+9).map(v => Number(v)||0);
+        if (String(area).startsWith('Nivel de seguridad planta')){
+          plantTotal = vals[vals.length-1];
+          r++;
+          break;
+        }
+        areas.push({
+          area: clean(area),
+          autoEval: vals[0], evalCruzada: vals[1], inspeccion: vals[2],
+          capacitaciones: vals[3], acciones: vals[4], actosCondiciones: vals[5],
+          accidentabilidad: vals[6], nivel: vals[7],
+        });
+        r++;
+      }
+      if (areas.length) periods.push({ mes, areas, plantTotal });
+    });
+    NS_PERIODS = periods;
+  }catch(err){
+    console.warn('No se pudo cargar el archivo de Nivel de Seguridad:', err);
   }
 }
 
@@ -489,6 +612,7 @@ const TAB_TITLES = {
   condiciones: 'Condiciones Inseguras',
   condicionesPersona: 'Condiciones por Persona',
   recuento: 'Recuento Actos Inseguros',
+  nivelSeguridad: 'Nivel de Seguridad',
 };
 const TAB_KPI_LABEL = {
   actos: 'Actos reportados',
@@ -496,17 +620,29 @@ const TAB_KPI_LABEL = {
   condiciones: 'Condiciones reportadas',
   condicionesPersona: 'Condiciones reportadas',
   recuento: 'Actos reportados',
+  nivelSeguridad: '',
 };
 
 function switchTab(tab){
   activeTab = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
-  document.getElementById('tab-' + tab).style.display = tab === 'resultado' || tab === 'recuento' ? 'grid' : (tab === 'condicionesPersona' ? 'grid' : 'grid');
+  document.getElementById('tab-' + tab).style.display = 'grid';
   document.getElementById('pageTitle').textContent = TAB_TITLES[tab];
   document.getElementById('kpiLabel').textContent = TAB_KPI_LABEL[tab];
-  populateAreaOptions();
-  render();
+
+  const filtersBar = document.querySelector('.filters');
+  const kpiBox = document.querySelector('.kpi');
+  if (tab === 'nivelSeguridad'){
+    filtersBar.style.display = 'none';
+    kpiBox.style.display = 'none';
+    initNivelSeguridadTab();
+  } else {
+    filtersBar.style.display = 'flex';
+    kpiBox.style.display = 'block';
+    populateAreaOptions();
+    render();
+  }
 }
 
 function countBy(rows, key, opts={}){
@@ -771,6 +907,84 @@ function renderRecuento(rows){
   rows.slice().sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,200).forEach(r => {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${escapeHtml(r.descripcion)}</td><td>${escapeHtml(r.especificacion)}</td><td>${r.fecha}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ---- Nivel de Seguridad tab ----
+let nsSelectedIdx = 0;
+let nsPopulated = false;
+
+function initNivelSeguridadTab(){
+  const hasData = NS_PERIODS.length > 0;
+  document.getElementById('nsNoData').style.display = hasData ? 'none' : 'block';
+  document.getElementById('nsContent').style.display = hasData ? 'block' : 'none';
+  if (!hasData) return;
+
+  const sel = document.getElementById('fNsMes');
+  if (!nsPopulated){
+    NS_PERIODS.forEach((p, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = p.mes + ' 2026';
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => { nsSelectedIdx = Number(sel.value); renderNivelSeguridad(); });
+    nsPopulated = true;
+    nsSelectedIdx = NS_PERIODS.length - 1; // default: most recent month with data
+  }
+  sel.value = nsSelectedIdx;
+  renderNivelSeguridad();
+}
+
+function nsSemaforoColor(pct){
+  if (pct >= 0.9) return '#2FA84F';
+  if (pct >= 0.7) return '#C99A1E';
+  return '#E32934';
+}
+function nsSemaforoLabel(pct){
+  if (pct >= 0.9) return 'Verde';
+  if (pct >= 0.7) return 'Amarillo';
+  return 'Rojo';
+}
+
+function renderNivelSeguridad(){
+  const period = NS_PERIODS[nsSelectedIdx];
+  if (!period) return;
+
+  const plantaEl = document.getElementById('nsPlantaPct');
+  const plantaPct = period.plantTotal || 0;
+  plantaEl.textContent = Math.round(plantaPct*100) + '%';
+  plantaEl.style.color = nsSemaforoColor(plantaPct);
+
+  let verde=0, amarillo=0, rojo=0;
+  period.areas.forEach(a => {
+    const s = nsSemaforoLabel(a.nivel);
+    if (s === 'Verde') verde++; else if (s === 'Amarillo') amarillo++; else rojo++;
+  });
+  document.getElementById('nsVerde').textContent = verde;
+  document.getElementById('nsAmarillo').textContent = amarillo;
+  document.getElementById('nsRojo').textContent = rojo;
+
+  const sorted = period.areas.slice().sort((a,b) => a.nivel - b.nivel);
+  const el = document.getElementById('c_ns_porArea');
+  el.parentElement.style.minHeight = Math.max(400, sorted.length * 26) + 'px';
+  upsertChart('c_ns_porArea', {
+    type:'bar',
+    data:{
+      labels: sorted.map(a => a.area),
+      datasets:[{ data: sorted.map(a => Math.round(a.nivel*100)), backgroundColor: sorted.map(a => nsSemaforoColor(a.nivel)), borderRadius:3 }]
+    },
+    options: barOpts({ indexAxis:'y', scales:{ x:{min:0, max:100, ticks:{callback:v=>v+'%'}} } })
+  });
+
+  const pct = v => Math.round(v*100) + '%';
+  const tbody = document.getElementById('t_ns_detalle');
+  tbody.innerHTML = '';
+  period.areas.slice().sort((a,b) => a.nivel - b.nivel).forEach(a => {
+    const tr = document.createElement('tr');
+    const nivelBadge = `<span style="color:${nsSemaforoColor(a.nivel)};font-weight:800;">${pct(a.nivel)}</span>`;
+    tr.innerHTML = `<td>${escapeHtml(a.area)}</td><td>${pct(a.autoEval)}</td><td>${pct(a.evalCruzada)}</td><td>${pct(a.inspeccion)}</td><td>${pct(a.capacitaciones)}</td><td>${pct(a.acciones)}</td><td>${pct(a.actosCondiciones)}</td><td>${pct(a.accidentabilidad)}</td><td>${nivelBadge}</td>`;
     tbody.appendChild(tr);
   });
 }

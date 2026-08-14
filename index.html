@@ -147,6 +147,22 @@
   table.data-table tr:hover td{background:#FAFBFD;}
   .table-wrap{max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;}
 
+  /* Nivel de Seguridad tablero styling */
+  .ns-table .ns-group-row th{
+    text-align:center;color:#fff;font-size:11px;letter-spacing:0.6px;top:0;
+  }
+  .ns-table .ns-grp-controlar{background:#1E7A4C;}
+  .ns-table .ns-grp-capacitar{background:#146B52;}
+  .ns-table .ns-grp-cuidar{background:#0077C8;}
+  .ns-table thead tr:nth-child(2) th{top:34px;}
+  .ns-table .ns-col-controlar{background:#EAF6EF;}
+  .ns-table .ns-col-capacitar{background:#E6F3F0;}
+  .ns-table .ns-col-cuidar{background:#EAF3FB;}
+  .ns-table td.ns-cell-controlar{background:#F5FBF8;}
+  .ns-table td.ns-cell-capacitar{background:#F2F9F7;}
+  .ns-table td.ns-cell-cuidar{background:#F5F9FD;}
+  .ns-table td.ns-cell-nivel{font-weight:800;text-align:center;}
+
   ::-webkit-scrollbar{width:7px;}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
 
@@ -306,19 +322,19 @@
       <div class="card">
         <h3>Áreas en verde</h3>
         <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
-          <div style="font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;color:#2FA84F;" id="nsVerde">–</div>
+          <div style="background:#E7F7EC;border-radius:10px;padding:10px 26px;font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;color:#2FA84F;" id="nsVerde">–</div>
         </div>
       </div>
       <div class="card">
         <h3>Áreas en amarillo</h3>
         <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
-          <div style="font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;color:#C99A1E;" id="nsAmarillo">–</div>
+          <div style="background:#FBF3DC;border-radius:10px;padding:10px 26px;font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;color:#C99A1E;" id="nsAmarillo">–</div>
         </div>
       </div>
       <div class="card">
         <h3>Áreas en rojo</h3>
         <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
-          <div style="font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;color:var(--red);" id="nsRojo">–</div>
+          <div style="background:#FBEAEB;border-radius:10px;padding:10px 26px;font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;color:var(--red);" id="nsRojo">–</div>
         </div>
       </div>
     </div>
@@ -331,11 +347,20 @@
     <div class="card">
       <h3>Detalle por categoría</h3>
       <div class="table-wrap">
-        <table class="data-table">
-          <thead><tr>
-            <th>Área</th><th>Auto Evaluaciones</th><th>Evaluación Cruzada</th><th>Inspección SSO</th>
-            <th>Capacitaciones</th><th>Acciones Correctivas</th><th>Actos y Condiciones</th><th>Accidentabilidad</th><th>Nivel de Seguridad</th>
-          </tr></thead>
+        <table class="data-table ns-table">
+          <thead>
+            <tr class="ns-group-row">
+              <th></th>
+              <th colspan="3" class="ns-grp-controlar">CONTROLAR</th>
+              <th class="ns-grp-capacitar">CAPACITAR</th>
+              <th colspan="3" class="ns-grp-cuidar">CUIDAR</th>
+              <th></th>
+            </tr>
+            <tr>
+              <th>Área</th><th class="ns-col-controlar">Auto Evaluaciones</th><th class="ns-col-controlar">Evaluación Cruzada</th><th class="ns-col-controlar">Inspección SSO</th>
+              <th class="ns-col-capacitar">Capacitaciones</th><th class="ns-col-cuidar">Acciones Correctivas</th><th class="ns-col-cuidar">Actos y Condiciones</th><th class="ns-col-cuidar">Accidentabilidad</th><th>Nivel de Seguridad</th>
+            </tr>
+          </thead>
           <tbody id="t_ns_detalle"></tbody>
         </table>
       </div>
@@ -912,8 +937,29 @@ function renderRecuento(rows){
 }
 
 // ---- Nivel de Seguridad tab ----
-let nsSelectedIdx = 0;
+let nsSelectedIdx = 0; // numeric index into NS_PERIODS, or 'avg' for the year-to-date average
 let nsPopulated = false;
+
+function nsBuildAnnualAverage(){
+  const currentMonthIdx = new Date().getMonth(); // 0=Enero ... year-to-date cutoff
+  const included = NS_PERIODS.filter(p => NS_MESES.indexOf(p.mes) <= currentMonthIdx);
+  if (!included.length) return null;
+
+  const areaNames = included[0].areas.map(a => a.area);
+  const avgAreas = areaNames.map(name => {
+    const rows = included.map(p => p.areas.find(a => a.area === name)).filter(Boolean);
+    const avg = key => rows.reduce((s,r) => s + r[key], 0) / rows.length;
+    return {
+      area: name,
+      autoEval: avg('autoEval'), evalCruzada: avg('evalCruzada'), inspeccion: avg('inspeccion'),
+      capacitaciones: avg('capacitaciones'), acciones: avg('acciones'), actosCondiciones: avg('actosCondiciones'),
+      accidentabilidad: avg('accidentabilidad'), nivel: avg('nivel'),
+    };
+  });
+  const plantTotal = included.reduce((s,p) => s + (p.plantTotal||0), 0) / included.length;
+  const lastMonthLabel = NS_MESES[currentMonthIdx];
+  return { mes: `Promedio Anual (Ene\u2013${lastMonthLabel})`, areas: avgAreas, plantTotal, isAverage:true };
+}
 
 function initNivelSeguridadTab(){
   const hasData = NS_PERIODS.length > 0;
@@ -929,7 +975,17 @@ function initNivelSeguridadTab(){
       opt.textContent = p.mes + ' 2026';
       sel.appendChild(opt);
     });
-    sel.addEventListener('change', () => { nsSelectedIdx = Number(sel.value); renderNivelSeguridad(); });
+    const annual = nsBuildAnnualAverage();
+    if (annual){
+      const opt = document.createElement('option');
+      opt.value = 'avg';
+      opt.textContent = '\u2605 ' + annual.mes;
+      sel.appendChild(opt);
+    }
+    sel.addEventListener('change', () => {
+      nsSelectedIdx = sel.value === 'avg' ? 'avg' : Number(sel.value);
+      renderNivelSeguridad();
+    });
     nsPopulated = true;
     nsSelectedIdx = NS_PERIODS.length - 1; // default: most recent month with data
   }
@@ -942,6 +998,11 @@ function nsSemaforoColor(pct){
   if (pct >= 0.7) return '#C99A1E';
   return '#E32934';
 }
+function nsSemaforoBg(pct){
+  if (pct >= 0.9) return '#E7F7EC';
+  if (pct >= 0.7) return '#FBF3DC';
+  return '#FBEAEB';
+}
 function nsSemaforoLabel(pct){
   if (pct >= 0.9) return 'Verde';
   if (pct >= 0.7) return 'Amarillo';
@@ -949,13 +1010,17 @@ function nsSemaforoLabel(pct){
 }
 
 function renderNivelSeguridad(){
-  const period = NS_PERIODS[nsSelectedIdx];
+  const period = nsSelectedIdx === 'avg' ? nsBuildAnnualAverage() : NS_PERIODS[nsSelectedIdx];
   if (!period) return;
 
   const plantaEl = document.getElementById('nsPlantaPct');
+  const plantaBadge = document.getElementById('nsPlantaBadge');
   const plantaPct = period.plantTotal || 0;
   plantaEl.textContent = Math.round(plantaPct*100) + '%';
   plantaEl.style.color = nsSemaforoColor(plantaPct);
+  plantaBadge.style.background = nsSemaforoBg(plantaPct);
+  plantaBadge.style.borderRadius = '10px';
+  plantaBadge.style.padding = '10px 22px';
 
   let verde=0, amarillo=0, rojo=0;
   period.areas.forEach(a => {
@@ -983,8 +1048,13 @@ function renderNivelSeguridad(){
   tbody.innerHTML = '';
   period.areas.slice().sort((a,b) => a.nivel - b.nivel).forEach(a => {
     const tr = document.createElement('tr');
-    const nivelBadge = `<span style="color:${nsSemaforoColor(a.nivel)};font-weight:800;">${pct(a.nivel)}</span>`;
-    tr.innerHTML = `<td>${escapeHtml(a.area)}</td><td>${pct(a.autoEval)}</td><td>${pct(a.evalCruzada)}</td><td>${pct(a.inspeccion)}</td><td>${pct(a.capacitaciones)}</td><td>${pct(a.acciones)}</td><td>${pct(a.actosCondiciones)}</td><td>${pct(a.accidentabilidad)}</td><td>${nivelBadge}</td>`;
+    const nivelColor = nsSemaforoColor(a.nivel);
+    const nivelBg = nsSemaforoBg(a.nivel);
+    tr.innerHTML = `<td>${escapeHtml(a.area)}</td>`
+      + `<td class="ns-cell-controlar">${pct(a.autoEval)}</td><td class="ns-cell-controlar">${pct(a.evalCruzada)}</td><td class="ns-cell-controlar">${pct(a.inspeccion)}</td>`
+      + `<td class="ns-cell-capacitar">${pct(a.capacitaciones)}</td>`
+      + `<td class="ns-cell-cuidar">${pct(a.acciones)}</td><td class="ns-cell-cuidar">${pct(a.actosCondiciones)}</td><td class="ns-cell-cuidar">${pct(a.accidentabilidad)}</td>`
+      + `<td class="ns-cell-nivel" style="background:${nivelBg};color:${nivelColor};">${pct(a.nivel)}</td>`;
     tbody.appendChild(tr);
   });
 }

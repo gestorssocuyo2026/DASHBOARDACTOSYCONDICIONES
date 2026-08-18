@@ -163,6 +163,24 @@
   .ns-table td.ns-cell-cuidar{background:#F5F9FD;}
   .ns-table td.ns-cell-nivel{font-weight:800;text-align:center;}
 
+  /* Triángulo de Accidentabilidad */
+  .tri-row{display:flex;align-items:center;gap:14px;padding:6px 0;border-bottom:1px solid #F0F1F4;}
+  .tri-row:last-child{border-bottom:none;}
+  .tri-shape{height:30px;border-radius:4px;flex-shrink:0;}
+  .tri-label{width:110px;font-size:12.5px;font-weight:700;color:var(--navy);flex-shrink:0;}
+  .tri-nums{display:flex;gap:22px;margin-left:auto;flex-shrink:0;}
+  .tri-num-col{text-align:right;min-width:70px;}
+  .tri-num-col .val{font-family:'Consolas','Courier New',monospace;font-size:20px;font-weight:800;}
+  .tri-num-col .lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:0.4px;color:var(--ink-soft);}
+  .tri-header-row{display:flex;align-items:center;gap:14px;padding-bottom:8px;margin-bottom:4px;border-bottom:2px solid var(--navy);}
+  .tri-header-row .tri-label{color:var(--ink-soft);font-size:11px;text-transform:uppercase;}
+  .tri-header-row .tri-nums .tri-num-col .val{font-size:11px;text-transform:uppercase;color:var(--ink-soft);font-family:inherit;}
+
+  .dias-card{background:#F7F9FC;border-radius:10px;padding:16px;text-align:center;}
+  .dias-card .val{font-family:'Consolas','Courier New',monospace;font-size:38px;font-weight:800;color:var(--brand-blue);}
+  .dias-card .lbl{font-size:12px;font-weight:700;color:var(--navy);margin-top:2px;}
+  .dias-card .sub{font-size:10.5px;color:var(--ink-soft);margin-top:4px;}
+
   ::-webkit-scrollbar{width:7px;}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
 
@@ -227,6 +245,7 @@
   <button class="tab-btn" data-tab="condicionesPersona">Condiciones por Persona</button>
   <button class="tab-btn" data-tab="recuento">Recuento Actos Inseguros</button>
   <button class="tab-btn" data-tab="nivelSeguridad">Nivel de Seguridad</button>
+  <button class="tab-btn" data-tab="triangulo">Triángulo de Accidentabilidad</button>
 </div>
 
 <div class="filters">
@@ -368,6 +387,37 @@
   </div>
 </div>
 
+<!-- TAB: Triángulo de Accidentabilidad -->
+<div class="grid cols1" id="tab-triangulo" style="display:none;">
+  <div class="card" id="triNoData" style="display:none;">
+    <h3>Triángulo de Accidentabilidad</h3>
+    <div class="modal-empty">
+      No encontré la hoja "Triángulo Accidentabilidad" dentro de <strong>NUEVO_NIVEL_DE_SEGURIDAD_2026_CBC-CUYOTENANGO.xlsx</strong>.
+      Verifica que esa hoja exista en el archivo que subiste a la raíz del repositorio.
+    </div>
+  </div>
+
+  <div id="triContent" style="display:none;">
+    <div class="card" style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h3 style="margin:0;border:none;padding:0;">Triángulo de Accidentabilidad — <span id="triMesLabel">—</span> <span id="triYearLabel">2026</span></h3>
+      </div>
+      <div style="font-size:11.5px;color:var(--ink-soft);">El mes mostrado y el acumulado del año se toman directo de tu archivo de Nivel de Seguridad.</div>
+    </div>
+
+    <div class="grid" style="padding:0;margin:0 0 18px;grid-template-columns:1.5fr 1fr;gap:18px;">
+      <div class="card">
+        <h3>Eventos — mensual y acumulado del año</h3>
+        <div id="triPyramidWrap"></div>
+      </div>
+      <div class="card">
+        <h3>Días sin accidentes</h3>
+        <div id="triDiasCards" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="personModal">
   <div class="modal-box">
     <div class="modal-head">
@@ -479,6 +529,7 @@ async function loadData(){
 }
 
 let NS_PERIODS = []; // [{mes, areas:[{area, autoEval, evalCruzada, inspeccion, capacitaciones, acciones, actosCondiciones, accidentabilidad, nivel}], plantTotal}]
+let TRI_DATA = null; // {mesLabel, catRows:{MUERTE:{mensual,acumulado},...}, ultimos:{LTI:'2026-..',...}}
 const NS_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 async function loadNivelSeguridadData(){
@@ -527,6 +578,56 @@ async function loadNivelSeguridadData(){
       if (areas.length) periods.push({ mes, areas, plantTotal });
     });
     NS_PERIODS = periods;
+
+    // ---- Triángulo Accidentabilidad (same workbook, own sheet) ----
+    const wsTri = wb.Sheets['Triángulo Accidentabilidad'];
+    if (wsTri){
+      const jsonTri = XLSX.utils.sheet_to_json(wsTri, {header:1, raw:true, defval:null});
+
+      // "Mes:" label cell -> read the next non-empty cell on the same row
+      let mesLabel = null;
+      outer:
+      for (let r=0;r<jsonTri.length;r++){
+        const row = jsonTri[r]; if (!row) continue;
+        const c = row.indexOf('Mes:');
+        if (c>=0){
+          for (let cc=c+1; cc<row.length; cc++){
+            if (row[cc] != null && String(row[cc]).trim() !== ''){ mesLabel = clean(row[cc]); break outer; }
+          }
+        }
+      }
+
+      // Category table: label cell followed by two numeric cells (mensual, acumulado)
+      const CATS = ['MUERTE','LTI','MDI','MTI','FAI','INCIDENTES','ACTOS','CONDICIONES'];
+      const catRows = {};
+      for (let r=0;r<jsonTri.length;r++){
+        const row = jsonTri[r]; if (!row) continue;
+        for (let c=0;c<row.length;c++){
+          const v = row[c];
+          if (typeof v === 'string' && CATS.includes(v.trim().toUpperCase())){
+            const mensual = row[c+1], acumulado = row[c+2];
+            if (typeof mensual === 'number' && typeof acumulado === 'number'){
+              catRows[v.trim().toUpperCase()] = { mensual, acumulado };
+            }
+          }
+        }
+      }
+
+      // "Último:" labels -> category name is the cell directly above, date is the cell to the right
+      const ultimos = {};
+      for (let r=0;r<jsonTri.length;r++){
+        const row = jsonTri[r]; if (!row) continue;
+        for (let c=0;c<row.length;c++){
+          if (row[c] === 'Último:'){
+            const catCell = jsonTri[r-1] ? jsonTri[r-1][c] : null;
+            const fecha = row[c+1];
+            if (catCell) ultimos[clean(catCell)] = parseFecha(fecha);
+          }
+        }
+      }
+
+      TRI_DATA = { mesLabel, catRows, ultimos };
+    }
   }catch(err){
     console.warn('No se pudo cargar el archivo de Nivel de Seguridad:', err);
   }
@@ -638,6 +739,7 @@ const TAB_TITLES = {
   condicionesPersona: 'Condiciones por Persona',
   recuento: 'Recuento Actos Inseguros',
   nivelSeguridad: 'Nivel de Seguridad',
+  triangulo: 'Triángulo de Accidentabilidad',
 };
 const TAB_KPI_LABEL = {
   actos: 'Actos reportados',
@@ -646,6 +748,7 @@ const TAB_KPI_LABEL = {
   condicionesPersona: 'Condiciones reportadas',
   recuento: 'Actos reportados',
   nivelSeguridad: '',
+  triangulo: '',
 };
 
 function switchTab(tab){
@@ -662,6 +765,10 @@ function switchTab(tab){
     filtersBar.style.display = 'none';
     kpiBox.style.display = 'none';
     initNivelSeguridadTab();
+  } else if (tab === 'triangulo'){
+    filtersBar.style.display = 'none';
+    kpiBox.style.display = 'none';
+    renderTriangulo();
   } else {
     filtersBar.style.display = 'flex';
     kpiBox.style.display = 'block';
@@ -1056,6 +1163,70 @@ function renderNivelSeguridad(){
       + `<td class="ns-cell-cuidar">${pct(a.acciones)}</td><td class="ns-cell-cuidar">${pct(a.actosCondiciones)}</td><td class="ns-cell-cuidar">${pct(a.accidentabilidad)}</td>`
       + `<td class="ns-cell-nivel" style="background:${nivelBg};color:${nivelColor};">${pct(a.nivel)}</td>`;
     tbody.appendChild(tr);
+  });
+}
+
+// ---- Triángulo de Accidentabilidad tab ----
+function triColor(v){ return v > 0 ? 'var(--red)' : '#2FA84F'; }
+
+function renderTriangulo(){
+  const hasData = !!TRI_DATA;
+  document.getElementById('triNoData').style.display = hasData ? 'none' : 'block';
+  document.getElementById('triContent').style.display = hasData ? 'block' : 'none';
+  if (!hasData) return;
+
+  document.getElementById('triMesLabel').textContent = TRI_DATA.mesLabel || '—';
+  document.getElementById('triYearLabel').textContent = new Date().getFullYear();
+
+  const order = ['MUERTE','LTI','MDI','MTI','FAI','INCIDENTES','ACTOS','CONDICIONES'];
+  const accidentTypes = new Set(['MUERTE','LTI','MDI','MTI','FAI','INCIDENTES']);
+  const rows = order.map(cat => {
+    const d = TRI_DATA.catRows[cat] || { mensual:0, acumulado:0 };
+    return { label: cat, mensual: d.mensual, acumulado: d.acumulado, accident: accidentTypes.has(cat) };
+  });
+
+  const wrap = document.getElementById('triPyramidWrap');
+  wrap.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'tri-header-row';
+  header.innerHTML = `<div class="tri-shape" style="width:36px;visibility:hidden;"></div><div class="tri-label">Tipo</div>
+    <div class="tri-nums"><div class="tri-num-col"><div class="val">${TRI_DATA.mesLabel || 'Mes'}</div></div><div class="tri-num-col"><div class="val">Acum. Año</div></div></div>`;
+  wrap.appendChild(header);
+
+  const shapeColors = ['#0E2038','#0E2038','#1B3A5C','#1B3A5C','#2E5C8A','#2E5C8A','#5FA8D3','#0E2038'];
+  rows.forEach((r, i) => {
+    const widthPct = 14 + i * (86/7);
+    const div = document.createElement('div');
+    div.className = 'tri-row';
+    const mesColor = r.accident ? triColor(r.mensual) : 'var(--brand-blue)';
+    const acColor = r.accident ? triColor(r.acumulado) : 'var(--brand-blue)';
+    div.innerHTML = `
+      <div class="tri-shape" style="width:${widthPct}%;max-width:220px;background:${shapeColors[i]};"></div>
+      <div class="tri-label">${r.label}</div>
+      <div class="tri-nums">
+        <div class="tri-num-col"><div class="val" style="color:${mesColor};">${r.mensual}</div><div class="lbl">Mensual</div></div>
+        <div class="tri-num-col"><div class="val" style="color:${acColor};">${r.acumulado}</div><div class="lbl">Acumulado</div></div>
+      </div>`;
+    wrap.appendChild(div);
+  });
+
+  const cardsEl = document.getElementById('triDiasCards');
+  cardsEl.innerHTML = '';
+  ['LTI','MDI','MTI','FAI'].forEach(cat => {
+    const fecha = TRI_DATA.ultimos[cat];
+    let dias = null;
+    if (fecha){
+      const last = new Date(fecha + 'T00:00:00');
+      const today = new Date(); today.setHours(0,0,0,0);
+      dias = Math.max(0, Math.round((today - last) / 86400000));
+    }
+    const card = document.createElement('div');
+    card.className = 'dias-card';
+    card.innerHTML = dias == null
+      ? `<div class="val" style="color:var(--ink-soft);font-size:22px;">Sin registro</div><div class="lbl">${cat}</div>`
+      : `<div class="val">${dias}</div><div class="lbl">${cat}</div><div class="sub">Desde ${fecha}</div>`;
+    cardsEl.appendChild(card);
   });
 }
 

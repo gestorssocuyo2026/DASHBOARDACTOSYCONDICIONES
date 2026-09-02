@@ -325,6 +325,12 @@
 
 <!-- TAB: Resumen ejecutivo -->
 <div class="grid cols1" id="tab-resumen" style="display:none;">
+  <div class="card" style="margin-bottom:18px;">
+    <div class="field" style="min-width:220px;">
+      <label for="fRsMes">Mes</label>
+      <select id="fRsMes"></select>
+    </div>
+  </div>
   <div class="grid grid-kpi4" style="padding:0;margin:0 0 18px;">
     <div class="card">
       <h3>Nivel de seguridad — planta</h3>
@@ -375,7 +381,7 @@
   </div>
 
   <div class="card">
-    <h3>Nivel de seguridad por área — mes vigente</h3>
+    <h3>Nivel de seguridad por área — <span id="rsChartMes">mes vigente</span></h3>
     <div class="chart-wrap tall" style="min-height:420px;"><canvas id="c_rs_nsPorArea"></canvas></div>
   </div>
 </div>
@@ -1095,18 +1101,24 @@ function render(){
 function renderActos(rows){
   const areaSel = document.getElementById('fArea').value;
 
-  const reportadaPorArea = countBy(filterByField(rows, 'area_que_reporta', areaSel), 'area_que_reporta').slice(0,12);
+  const rowsReportada = filterByField(rows, 'area_que_reporta', areaSel);
+  const reportadaPorArea = countBy(rowsReportada, 'area_que_reporta');
   upsertChart('c_actos_reportadaPorArea', {type:'bar', data:{labels:reportadaPorArea.map(x=>x[0]), datasets:[{data:reportadaPorArea.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:4}]}, options:barOpts()});
+  onPersonBarClick(charts['c_actos_reportadaPorArea'], reportadaPorArea.map(x=>x[0]), rowsReportada, 'area_que_reporta', 'Actos reportados por el área', 'actos');
 
-  const cometidosPorArea = countBy(filterByField(rows, 'area_reportada', areaSel), 'area_reportada').slice(0,12);
+  const rowsCometida = filterByField(rows, 'area_reportada', areaSel);
+  const cometidosPorArea = countBy(rowsCometida, 'area_reportada');
   upsertChart('c_actos_cometidosPorArea', {type:'bar', data:{labels:cometidosPorArea.map(x=>x[0]), datasets:[{data:cometidosPorArea.map(x=>x[1]), backgroundColor:'#2E3B47', borderRadius:4}]}, options:barOpts()});
+  onPersonBarClick(charts['c_actos_cometidosPorArea'], cometidosPorArea.map(x=>x[0]), rowsCometida, 'area_reportada', 'Actos cometidos en el área', 'actos');
 
   const rowsColaboradores = filterByField(rows, 'area_reportada', areaSel);
-  const colaboradores = countBy(rowsColaboradores, 'colaborador', {excludeDash:true}).slice(0,8);
+  const colaboradores = countBy(rowsColaboradores, 'colaborador', {excludeDash:true});
+  const elColA = document.getElementById('c_actos_colaboradores');
+  elColA.parentElement.style.minHeight = Math.max(230, colaboradores.length * 22) + 'px';
   upsertChart('c_actos_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
   onPersonBarClick(charts['c_actos_colaboradores'], colaboradores.map(x=>x[0]), rowsColaboradores, 'colaborador', 'Actos inseguros cometidos', 'actos');
 
-  const especificacion = countBy(rows, 'especificacion').slice(0,6);
+  const especificacion = countBy(rows, 'especificacion');
   upsertChart('c_actos_especificacion', {type:'pie', data:{labels:especificacion.map(x=>x[0]), datasets:[{data:especificacion.map(x=>x[1]), backgroundColor:COLORS}]}, options:pieOpts()});
 
   const clasificacion = countBy(rows, 'clasificacion');
@@ -1151,19 +1163,25 @@ function renderResultado(rows){
 function renderCondiciones(rows){
   const areaSel = document.getElementById('fArea').value;
 
-  const porArea = countBy(filterByField(rows, 'area_que_reporta', areaSel), 'area_que_reporta').slice(0,14);
+  const rowsPorArea = filterByField(rows, 'area_que_reporta', areaSel);
+  const porArea = countBy(rowsPorArea, 'area_que_reporta');
   upsertChart('c_cond_porArea', {type:'bar', data:{labels:porArea.map(x=>x[0]), datasets:[{data:porArea.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:4}]}, options:barOpts()});
+  onPersonBarClick(charts['c_cond_porArea'], porArea.map(x=>x[0]), rowsPorArea, 'area_que_reporta', 'Condiciones reportadas por el área', 'condiciones');
 
   const clasificacion = countBy(rows, 'clasificacion');
   upsertChart('c_cond_clasificacion', {type:'pie', data:{labels:clasificacion.map(x=>x[0]), datasets:[{data:clasificacion.map(x=>x[1]), backgroundColor:COLORS}]}, options:pieOpts()});
 
   const rowsColaboradores = filterByField(rows, 'area_que_reporta', areaSel);
-  const colaboradores = countBy(rowsColaboradores, 'persona').slice(0,8);
+  const colaboradores = countBy(rowsColaboradores, 'persona');
+  const elColC = document.getElementById('c_cond_colaboradores');
+  elColC.parentElement.style.minHeight = Math.max(230, colaboradores.length * 22) + 'px';
   upsertChart('c_cond_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#2E3B47', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
   onPersonBarClick(charts['c_cond_colaboradores'], colaboradores.map(x=>x[0]), rowsColaboradores, 'persona', 'Condiciones inseguras reportadas', 'condiciones');
 
-  const areasReportadas = countBy(filterByField(rows, 'area_a_reportar', areaSel), 'area_a_reportar').slice(0,16);
+  const rowsAreasRep = filterByField(rows, 'area_a_reportar', areaSel);
+  const areasReportadas = countBy(rowsAreasRep, 'area_a_reportar');
   upsertChart('c_cond_areasReportadas', {type:'bar', data:{labels:areasReportadas.map(x=>x[0]), datasets:[{data:areasReportadas.map(x=>x[1]), backgroundColor:'#5FC1E8', borderRadius:4}]}, options:barOpts()});
+  onPersonBarClick(charts['c_cond_areasReportadas'], areasReportadas.map(x=>x[0]), rowsAreasRep, 'area_a_reportar', 'Condiciones reportadas en el área', 'condiciones');
 
   const feed = document.getElementById('f_cond_desc');
   feed.innerHTML = '';
@@ -1488,23 +1506,44 @@ function renderTriangulo(){
 }
 
 // ---- Resumen ejecutivo (portada) ----
+let rsSelectedMonthIdx = null;
+let rsPopulated = false;
+
 function renderResumen(){
   const year = new Date().getFullYear();
-  const monthIdx = new Date().getMonth();
-  const mStr = `${year}-${String(monthIdx+1).padStart(2,'0')}`;
+  const currentMonthIdx = new Date().getMonth();
 
-  // Nivel de seguridad: último mes con datos cargados
-  if (NS_PERIODS.length){
-    const last = NS_PERIODS[NS_PERIODS.length-1];
-    const pct = last.plantTotal || 0;
-    const badge = document.getElementById('rsNsBadge');
+  const sel = document.getElementById('fRsMes');
+  if (!rsPopulated){
+    for (let m = 0; m <= currentMonthIdx; m++){
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = MESES[m] + ' ' + year;
+      sel.appendChild(opt);
+    }
+    sel.addEventListener('change', () => { rsSelectedMonthIdx = Number(sel.value); renderResumen(); });
+    rsPopulated = true;
+    rsSelectedMonthIdx = currentMonthIdx;
+  }
+  sel.value = rsSelectedMonthIdx;
+
+  const monthIdx = rsSelectedMonthIdx;
+  const monthName = MESES[monthIdx];
+  const mStr = `${year}-${String(monthIdx+1).padStart(2,'0')}`;
+  const ytdEnd = `${mStr}-31`;
+
+  // Nivel de seguridad: el mes seleccionado
+  const period = NS_PERIODS.find(p => p.mes === monthName);
+  const badge = document.getElementById('rsNsBadge');
+  if (period){
+    const pct = period.plantTotal || 0;
     document.getElementById('rsNsPct').textContent = Math.round(pct*100) + '%';
     document.getElementById('rsNsPct').style.color = nsSemaforoColor(pct);
     badge.style.background = nsSemaforoBg(pct);
-    document.getElementById('rsNsMes').textContent = last.mes + ' ' + year;
+    document.getElementById('rsNsMes').textContent = monthName + ' ' + year;
 
     let verde=0, amarillo=0, rojo=0;
-    last.areas.forEach(a => {
+    period.areas.forEach(a => {
       const s = nsSemaforoLabel(a.nivel);
       if (s === 'Verde') verde++; else if (s === 'Amarillo') amarillo++; else rojo++;
     });
@@ -1512,7 +1551,8 @@ function renderResumen(){
     document.getElementById('rsAmarillo').textContent = amarillo;
     document.getElementById('rsRojo').textContent = rojo;
 
-    const sorted = last.areas.slice().sort((a,b) => a.nivel - b.nivel);
+    const sorted = period.areas.slice().sort((a,b) => a.nivel - b.nivel);
+    document.getElementById('rsChartMes').textContent = monthName + ' ' + year;
     const el = document.getElementById('c_rs_nsPorArea');
     el.parentElement.style.minHeight = Math.max(420, sorted.length * 26) + 'px';
     upsertChart('c_rs_nsPorArea', {
@@ -1523,19 +1563,23 @@ function renderResumen(){
       },
       options: barOpts({ indexAxis:'y', scales:{ x:{min:0, max:100, ticks:{callback:v=>v+'%'}} } })
     });
+  } else {
+    document.getElementById('rsNsPct').textContent = '–';
+    document.getElementById('rsNsMes').textContent = 'Sin datos para ' + monthName;
+    badge.style.background = 'transparent';
   }
 
-  // Actos / Condiciones: mes actual + acumulado año
+  // Actos / Condiciones: mes seleccionado + acumulado hasta ese mes
   const actosMes = ACTOS.filter(r => r.fecha.startsWith(mStr)).length;
-  const actosYtd = ACTOS.filter(r => r.fecha.startsWith(String(year))).length;
+  const actosYtd = ACTOS.filter(r => r.fecha.startsWith(String(year)) && r.fecha <= ytdEnd).length;
   const condMes = CONDICIONES.filter(r => r.fecha.startsWith(mStr)).length;
-  const condYtd = CONDICIONES.filter(r => r.fecha.startsWith(String(year))).length;
+  const condYtd = CONDICIONES.filter(r => r.fecha.startsWith(String(year)) && r.fecha <= ytdEnd).length;
   document.getElementById('rsActosMes').textContent = actosMes;
   document.getElementById('rsActosYtd').textContent = actosYtd;
   document.getElementById('rsCondMes').textContent = condMes;
   document.getElementById('rsCondYtd').textContent = condYtd;
 
-  // Días sin accidentes
+  // Días sin accidentes (siempre a la fecha de hoy, no depende del mes)
   const diasEl = document.getElementById('rsDiasCards');
   diasEl.innerHTML = '';
   const ultimos = (TRI_DATA && TRI_DATA.ultimos) || {};
@@ -1555,7 +1599,7 @@ function renderResumen(){
     diasEl.appendChild(card);
   });
 
-  // Accidentabilidad acumulada del año
+  // Accidentabilidad acumulada hasta el mes seleccionado
   const triEl = document.getElementById('rsTriResumen');
   triEl.innerHTML = '';
   if (TRI_MONTHLY.length){

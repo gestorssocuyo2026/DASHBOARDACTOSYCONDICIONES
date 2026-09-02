@@ -17,23 +17,31 @@
     --red:#E32934;
     --green:#2FA84F;
     --blue:#0098D6;
-    --bg:#F2F4F7;
+    --bg:#E9ECEF;
     --card:#FFFFFF;
     --ink:#16232F;
     --ink-soft:#5B6B7A;
-    --line:#E3E7EC;
+    --line:#D8DDE3;
+    --steel-900:#14181E;
+    --steel-800:#1B222B;
+    --steel-700:#232C36;
+    --hazard:#F5B301;
+    --hazard-dark:#C79100;
+    --led-green:#39D98A;
+    --font-head:'Bahnschrift SemiBold','Bahnschrift','Arial Narrow','Segoe UI',Arial,sans-serif;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
     background:var(--bg);
+    background-image:linear-gradient(180deg,#E4E8EC 0%,var(--bg) 300px);
     color:var(--ink);
     font-family:'Segoe UI',system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;
   }
   .topbar{
-    background:var(--navy);
-    background-image:linear-gradient(120deg, #1B242C 0%, var(--navy) 100%);
+    background:var(--steel-900);
+    background-image:linear-gradient(120deg, #0E1319 0%, var(--steel-800) 55%, var(--steel-700) 100%);
     color:#fff;
     padding:22px 30px;
     display:flex;
@@ -41,42 +49,48 @@
     justify-content:space-between;
     gap:20px;
     flex-wrap:wrap;
-    box-shadow:0 2px 14px rgba(0,48,91,0.25);
+    box-shadow:0 2px 14px rgba(0,0,0,0.35);
+  }
+  .hazard-stripe{
+    height:6px;
+    background:repeating-linear-gradient(-45deg, var(--hazard) 0 14px, var(--steel-900) 14px 28px);
   }
   .brand{display:flex;align-items:center;gap:18px;}
   .brand-logo{
     height:46px;width:auto;
-    background:#fff;border-radius:8px;padding:6px 10px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+    background:#fff;border-radius:4px;padding:6px 10px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
     flex-shrink:0;
   }
-  .brand h1{font-size:21px;margin:0;letter-spacing:0.2px;font-weight:700;}
-  .brand p{margin:3px 0 0;font-size:11.5px;color:#AFC3DC;letter-spacing:0.6px;text-transform:uppercase;}
+  .brand h1{font-size:23px;margin:0;letter-spacing:0.8px;font-weight:700;font-family:var(--font-head);text-transform:uppercase;}
+  .brand p{margin:3px 0 0;font-size:11.5px;color:#8FA3B8;letter-spacing:1.2px;text-transform:uppercase;font-family:var(--font-head);}
   .kpi{
-    background:rgba(255,255,255,0.07);
-    border:1px solid rgba(255,255,255,0.18);
-    border-radius:14px;
+    background:#0C1116;
+    border:1px solid #303B48;
+    border-radius:6px;
     padding:11px 24px;
     text-align:right;
+    box-shadow:inset 0 2px 8px rgba(0,0,0,0.55);
   }
-  .kpi .num{font-family:'Consolas','Courier New',monospace;font-size:36px;font-weight:800;color:var(--brand-blue);line-height:1;text-shadow:0 1px 0 rgba(0,0,0,0.15);}
-  .kpi .label{font-size:11px;color:#AFC3DC;text-transform:uppercase;letter-spacing:0.7px;margin-top:5px;}
+  .kpi .num{font-family:'Consolas','Courier New',monospace;font-size:36px;font-weight:800;color:var(--hazard);line-height:1;letter-spacing:2px;text-shadow:0 0 12px rgba(245,179,1,0.35);}
+  .kpi .label{font-size:11px;color:#8FA3B8;text-transform:uppercase;letter-spacing:0.9px;margin-top:5px;font-family:var(--font-head);}
 
   .tabs{
-    background:#1B242C;
-    border-bottom:3px solid var(--brand-blue);
+    background:var(--steel-800);
+    border-bottom:3px solid var(--hazard);
     display:flex;flex-wrap:wrap;
     padding:0 22px;
   }
   .tab-btn{
-    background:none;border:none;color:#9FB6D3;
-    padding:14px 20px;font-size:13px;font-weight:700;
+    background:none;border:none;color:#8FA3B8;
+    padding:14px 20px;font-size:13.5px;font-weight:600;
     cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-3px;
-    font-family:inherit;white-space:nowrap;letter-spacing:0.2px;
+    font-family:var(--font-head);white-space:nowrap;letter-spacing:0.8px;
+    text-transform:uppercase;
     transition:color 0.15s;
   }
   .tab-btn:hover{color:#fff;}
-  .tab-btn.active{color:#fff;border-bottom-color:var(--brand-blue);}
+  .tab-btn.active{color:var(--hazard);border-bottom-color:var(--hazard);}
 
   .filters{
     max-width:1400px;margin:0 auto;
@@ -84,19 +98,20 @@
     display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;
   }
   .field{display:flex;flex-direction:column;gap:5px;}
-  .field label{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);font-weight:600;}
+  .field label{font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--ink-soft);font-weight:600;font-family:var(--font-head);}
   .field select{
-    border:1px solid var(--line);background:#fff;border-radius:8px;
+    border:1px solid #B8C2CC;background:#fff;border-radius:5px;
     padding:9px 12px;font-size:13px;color:var(--ink);min-width:170px;
-    box-shadow:0 1px 2px rgba(0,0,0,0.03);
+    box-shadow:inset 0 1px 3px rgba(0,0,0,0.06);
   }
-  .field select:focus{outline:2px solid var(--navy-2);outline-offset:1px;}
+  .field select:focus{outline:2px solid var(--hazard);outline-offset:1px;}
   .reset-btn{
-    border:none;background:var(--navy);color:#fff;border-radius:8px;
-    padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;
-    letter-spacing:0.2px;
+    border:none;background:var(--steel-800);color:#fff;border-radius:5px;
+    padding:10px 18px;font-size:12.5px;font-weight:600;cursor:pointer;
+    letter-spacing:0.8px;font-family:var(--font-head);text-transform:uppercase;
+    border-left:4px solid var(--hazard);
   }
-  .reset-btn:hover{background:var(--brand-blue);}
+  .reset-btn:hover{background:var(--steel-700);}
   .status{max-width:1400px;margin:8px auto 0;padding:0 28px;font-size:12px;color:var(--ink-soft);}
   .status.err{color:var(--red);font-weight:600;}
 
@@ -104,10 +119,10 @@
     margin-left:auto;
     display:flex;align-items:center;gap:8px;
     background:#EAF6EF;border:1px solid #BFE6CC;color:#1E6B3A;
-    border-radius:8px;padding:9px 14px;font-size:12px;font-weight:600;
+    border-radius:5px;padding:9px 14px;font-size:12px;font-weight:600;
     letter-spacing:0.2px;
   }
-  .update-badge .dot{width:8px;height:8px;border-radius:50%;background:#2FA84F;flex-shrink:0;}
+  .update-badge .dot{width:8px;height:8px;border-radius:50%;background:#2FA84F;flex-shrink:0;box-shadow:0 0 6px rgba(47,168,79,0.8);}
   .update-badge strong{font-weight:700;}
   @media (max-width:900px){ .update-badge{margin-left:0;} }
 
@@ -120,17 +135,19 @@
   .grid.grid-kpi4{grid-template-columns:1fr 1fr 1fr 1fr;gap:18px;}
   .grid.grid-tri{grid-template-columns:1.5fr 1fr;gap:18px;}
   .card{
-    background:var(--card);border-radius:12px;border:1px solid var(--line);
+    background:var(--card);border-radius:6px;border:1px solid #C9D1D9;
+    border-top:3px solid var(--steel-800);
     padding:18px 20px 20px;display:flex;flex-direction:column;
-    box-shadow:0 1px 3px rgba(16,40,70,0.06), 0 1px 2px rgba(16,40,70,0.04);
+    box-shadow:0 2px 5px rgba(16,24,32,0.09);
   }
   .card h3{
-    font-size:13.5px;margin:0 0 14px;color:var(--navy);
+    font-size:14px;margin:0 0 14px;color:var(--steel-800);
     display:flex;align-items:center;gap:9px;
-    text-transform:uppercase;letter-spacing:0.4px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.8px;font-weight:600;
+    font-family:var(--font-head);
     padding-bottom:10px;border-bottom:1px solid var(--line);
   }
-  .card h3::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--brand-blue);display:inline-block;flex-shrink:0;}
+  .card h3::before{content:"";width:10px;height:10px;background:var(--hazard);display:inline-block;flex-shrink:0;transform:rotate(45deg);border:1.5px solid var(--steel-800);}
   .chart-wrap{position:relative;flex:1;min-height:230px;}
   .chart-wrap.tall{min-height:520px;}
 
@@ -198,10 +215,14 @@
   .tri-header-row .tri-label{color:var(--ink-soft);font-size:11px;text-transform:uppercase;}
   .tri-header-row .tri-nums .tri-num-col .val{font-size:11px;text-transform:uppercase;color:var(--ink-soft);font-family:inherit;}
 
-  .dias-card{background:#F7F9FC;border-radius:10px;padding:16px;text-align:center;}
-  .dias-card .val{font-family:'Consolas','Courier New',monospace;font-size:38px;font-weight:800;color:var(--brand-blue);}
-  .dias-card .lbl{font-size:12px;font-weight:700;color:var(--navy);margin-top:2px;}
-  .dias-card .sub{font-size:10.5px;color:var(--ink-soft);margin-top:4px;}
+  .dias-card{
+    background:#0C1116;border:1px solid #303B48;border-radius:6px;
+    padding:14px 12px;text-align:center;
+    box-shadow:inset 0 2px 10px rgba(0,0,0,0.6);
+  }
+  .dias-card .val{font-family:'Consolas','Courier New',monospace;font-size:38px;font-weight:800;color:var(--led-green);letter-spacing:2px;text-shadow:0 0 14px rgba(57,217,138,0.45);line-height:1;}
+  .dias-card .lbl{font-size:12px;font-weight:600;color:#8FA3B8;margin-top:6px;font-family:var(--font-head);letter-spacing:1.2px;}
+  .dias-card .sub{font-size:10px;color:#5B6B7A;margin-top:4px;font-family:'Consolas','Courier New',monospace;}
 
   ::-webkit-scrollbar{width:7px;}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
@@ -294,6 +315,7 @@
     <div class="label" id="kpiLabel">Reportes</div>
   </div>
 </div>
+<div class="hazard-stripe"></div>
 
 <div class="tabs" id="tabs">
   <button class="tab-btn active" data-tab="resumen">Resumen</button>
@@ -335,8 +357,8 @@
     <div class="card">
       <h3>Nivel de seguridad — planta</h3>
       <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
-        <div id="rsNsBadge" style="text-align:center;border-radius:10px;padding:10px 22px;">
-          <div style="font-family:'Consolas','Courier New',monospace;font-size:38px;font-weight:800;" id="rsNsPct">–</div>
+        <div id="rsNsBadge" style="text-align:center;border-radius:10px;padding:4px 10px;">
+          <div id="rsNsGauge"></div>
           <div style="font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.4px;" id="rsNsMes">—</div>
         </div>
       </div>
@@ -489,8 +511,8 @@
       <div class="card">
         <h3>Nivel de seguridad — planta</h3>
         <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
-          <div id="nsPlantaBadge" style="text-align:center;">
-            <div style="font-family:'Consolas','Courier New',monospace;font-size:40px;font-weight:800;" id="nsPlantaPct">–</div>
+          <div id="nsPlantaBadge" style="text-align:center;border-radius:10px;padding:4px 10px;">
+            <div id="nsPlantaGauge"></div>
           </div>
         </div>
       </div>
@@ -1302,6 +1324,19 @@ function initNivelSeguridadTab(){
   renderNivelSeguridad();
 }
 
+// Semicircular "machine panel" gauge for plant-level safety score
+function nsGaugeSvg(pct){
+  const p = Math.max(0, Math.min(1, pct || 0));
+  const color = nsSemaforoColor(pct || 0);
+  const valuePct = Math.round((pct || 0) * 100);
+  return `<svg viewBox="0 0 160 96" width="160" height="96" style="display:block;margin:0 auto;">
+    <path d="M 16 84 A 64 64 0 0 1 144 84" fill="none" stroke="#DDE3E9" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 16 84 A 64 64 0 0 1 144 84" fill="none" stroke="${color}" stroke-width="13" stroke-linecap="round"
+      pathLength="100" stroke-dasharray="${(p*100).toFixed(1)} 100"/>
+    <text x="80" y="76" text-anchor="middle" font-family="Consolas,monospace" font-size="30" font-weight="800" fill="${color}">${valuePct}%</text>
+  </svg>`;
+}
+
 function nsSemaforoColor(pct){
   if (pct >= 0.9) return '#2FA84F';
   if (pct >= 0.7) return '#C99A1E';
@@ -1322,14 +1357,10 @@ function renderNivelSeguridad(){
   const period = nsSelectedIdx === 'avg' ? nsBuildAnnualAverage() : NS_PERIODS[nsSelectedIdx];
   if (!period) return;
 
-  const plantaEl = document.getElementById('nsPlantaPct');
   const plantaBadge = document.getElementById('nsPlantaBadge');
   const plantaPct = period.plantTotal || 0;
-  plantaEl.textContent = Math.round(plantaPct*100) + '%';
-  plantaEl.style.color = nsSemaforoColor(plantaPct);
+  document.getElementById('nsPlantaGauge').innerHTML = nsGaugeSvg(plantaPct);
   plantaBadge.style.background = nsSemaforoBg(plantaPct);
-  plantaBadge.style.borderRadius = '10px';
-  plantaBadge.style.padding = '10px 22px';
 
   let verde=0, amarillo=0, rojo=0;
   period.areas.forEach(a => {
@@ -1537,8 +1568,7 @@ function renderResumen(){
   const badge = document.getElementById('rsNsBadge');
   if (period){
     const pct = period.plantTotal || 0;
-    document.getElementById('rsNsPct').textContent = Math.round(pct*100) + '%';
-    document.getElementById('rsNsPct').style.color = nsSemaforoColor(pct);
+    document.getElementById('rsNsGauge').innerHTML = nsGaugeSvg(pct);
     badge.style.background = nsSemaforoBg(pct);
     document.getElementById('rsNsMes').textContent = monthName + ' ' + year;
 
@@ -1564,7 +1594,7 @@ function renderResumen(){
       options: barOpts({ indexAxis:'y', scales:{ x:{min:0, max:100, ticks:{callback:v=>v+'%'}} } })
     });
   } else {
-    document.getElementById('rsNsPct').textContent = '–';
+    document.getElementById('rsNsGauge').innerHTML = '<div style="font-family:Consolas,monospace;font-size:34px;font-weight:800;color:var(--ink-soft);padding:20px 0;">–</div>';
     document.getElementById('rsNsMes').textContent = 'Sin datos para ' + monthName;
     badge.style.background = 'transparent';
   }

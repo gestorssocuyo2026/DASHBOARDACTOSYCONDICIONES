@@ -6,6 +6,7 @@
 <title>Dashboard SSO · Planta Cuyotenango</title>
 <script src="./files/xlsx.full.min.js"></script>
 <script src="./files/chart.umd.js"></script>
+<script src="./files/html2canvas.min.js"></script>
 <style>
   :root{
     --navy:#D9E2F0;
@@ -97,6 +98,17 @@
   .kpi .num{font-family:'Consolas','Courier New',monospace;font-size:34px;font-weight:800;color:var(--brand-blue);line-height:1;letter-spacing:1px;text-shadow:0 0 16px var(--glow);}
   .kpi .label{font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.9px;margin-top:5px;}
 
+  .mainbar-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .export-btn{
+    display:flex;align-items:center;gap:8px;
+    border:1px solid rgba(0,152,214,0.4);background:rgba(0,152,214,0.12);color:var(--brand-blue);
+    border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:600;cursor:pointer;
+    letter-spacing:0.3px;font-family:inherit;transition:background 0.15s;
+  }
+  .export-btn svg{width:15px;height:15px;fill:currentColor;}
+  .export-btn:hover{background:var(--brand-deep);color:#fff;border-color:var(--brand-deep);}
+  .export-btn:disabled{opacity:0.5;cursor:wait;}
+
   .filters{
     padding:16px 30px 0;
     display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;
@@ -156,13 +168,14 @@
   }
   .chart-search{
     border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.05);border-radius:9px;
-    padding:8px 12px;font-size:12.5px;color:var(--ink);margin-bottom:12px;width:100%;
+    padding:8px 12px;font-size:12.5px;color:var(--ink);margin-bottom:12px;width:100%;max-width:760px;
     font-family:inherit;
   }
   .chart-search::placeholder{color:var(--ink-soft);}
   .chart-search:focus{outline:2px solid var(--brand-deep);outline-offset:1px;}
   .card h3::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--brand-deep);box-shadow:0 0 10px var(--glow);display:inline-block;flex-shrink:0;}
   .chart-wrap{position:relative;flex:1;min-height:230px;}
+  .chart-wrap.compact{max-width:760px;}
   .chart-wrap.tall{min-height:520px;}
 
   .feed{max-height:520px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px;}
@@ -339,10 +352,7 @@
   <nav class="tabs" id="tabs">
     <button class="tab-btn active" data-tab="resumen"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Resumen</button>
     <button class="tab-btn" data-tab="actos"><svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>Actos Inseguros</button>
-    <button class="tab-btn" data-tab="resultado"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Resultado Actos</button>
     <button class="tab-btn" data-tab="condiciones"><svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>Condiciones</button>
-    <button class="tab-btn" data-tab="condicionesPersona"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Condiciones × Persona</button>
-    <button class="tab-btn" data-tab="recuento"><svg viewBox="0 0 24 24"><path d="M3 3v18h18v-2H5V3H3zm14 12h2v4h-2v-4zm-4-6h2v10h-2V9zm-4 3h2v7H9v-7z"/></svg>Recuento de Actos</button>
     <button class="tab-btn" data-tab="nivelSeguridad"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>Nivel de Seguridad</button>
     <button class="tab-btn" data-tab="triangulo"><svg viewBox="0 0 24 24"><path d="M12 4l10 17H2L12 4zm0 4.5L6.5 18h11L12 8.5z"/></svg>Accidentabilidad</button>
   </nav>
@@ -356,9 +366,15 @@
     <h1 id="pageTitle">Resumen Ejecutivo</h1>
     <p class="mainbar-sub">Planta Cuyotenango · Salud y Seguridad Ocupacional</p>
   </div>
-  <div class="kpi">
-    <div class="num" id="kpiTotal">–</div>
-    <div class="label" id="kpiLabel">Reportes</div>
+  <div class="mainbar-actions">
+    <button class="export-btn" id="exportBtn" title="Descarga la pestaña actual como imagen PNG">
+      <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      Exportar imagen
+    </button>
+    <div class="kpi">
+      <div class="num" id="kpiTotal">–</div>
+      <div class="label" id="kpiLabel">Reportes</div>
+    </div>
   </div>
 </header>
 
@@ -443,56 +459,36 @@
 </div>
 
 <!-- TAB: Actos Inseguros -->
-<div class="grid" id="tab-actos" style="display:none;">
-  <div class="card"><h3>Actos reportados por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_actos_reportadaPorArea"></canvas></div></div>
-  <div class="card"><h3>Actos cometidos por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_actos_cometidosPorArea"></canvas></div></div>
-  <div class="card"><h3>Colaboradores más reportados<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_actos_colaboradores"></canvas></div></div>
-  <div class="card"><h3>Principales actos inseguros</h3><div class="chart-wrap"><canvas id="c_actos_especificacion"></canvas></div></div>
-  <div class="card"><h3>Clasificación de actos inseguros</h3><div class="chart-wrap"><canvas id="c_actos_clasificacion"></canvas></div></div>
-  <div class="card"><h3>Descripción de reportes</h3><div class="feed" id="f_actos_desc"></div></div>
-</div>
-
-<!-- TAB: Resultado Actos Inseguros -->
-<div class="grid cols2" id="tab-resultado" style="display:none;">
-  <div class="card"><h3>Actos inseguros cometidos por persona<span class="h3-hint">clic en barra = detalle</span></h3>
+<div class="grid cols1" id="tab-actos" style="display:none;">
+  <div class="grid" style="padding:0;margin:0 0 18px;">
+    <div class="card"><h3>Actos reportados por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_actos_reportadaPorArea"></canvas></div></div>
+    <div class="card"><h3>Actos cometidos por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_actos_cometidosPorArea"></canvas></div></div>
+    <div class="card"><h3>Principales actos inseguros</h3><div class="chart-wrap"><canvas id="c_actos_especificacion"></canvas></div></div>
+    <div class="card"><h3>Clasificación de actos inseguros</h3><div class="chart-wrap"><canvas id="c_actos_clasificacion"></canvas></div></div>
+    <div class="card" style="grid-column:span 2;"><h3>Descripción de reportes</h3><div class="feed" id="f_actos_desc"></div></div>
+  </div>
+  <div class="grid cols2" style="padding:0;margin:0;">
+    <div class="card"><h3>Actos inseguros cometidos por persona<span class="h3-hint">clic en barra = detalle</span></h3>
     <input type="text" class="chart-search" id="srchResCometidos" placeholder="Buscar por nombre...">
-    <div class="chart-wrap tall"><canvas id="c_resultado_cometidos"></canvas></div></div>
-  <div class="card"><h3>Actos inseguros reportados por persona<span class="h3-hint">clic en barra = detalle</span></h3>
+    <div class="chart-wrap tall compact"><canvas id="c_resultado_cometidos"></canvas></div></div>
+    <div class="card"><h3>Actos inseguros reportados por persona<span class="h3-hint">clic en barra = detalle</span></h3>
     <input type="text" class="chart-search" id="srchResReportados" placeholder="Buscar por nombre...">
-    <div class="chart-wrap tall"><canvas id="c_resultado_reportados"></canvas></div></div>
+    <div class="chart-wrap tall compact"><canvas id="c_resultado_reportados"></canvas></div></div>
+  </div>
 </div>
 
 <!-- TAB: Condiciones Inseguras -->
-<div class="grid" id="tab-condiciones" style="display:none;">
-  <div class="card"><h3>Condiciones inseguras reportadas por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_cond_porArea"></canvas></div></div>
-  <div class="card"><h3>Principales reportes de condiciones inseguras</h3><div class="chart-wrap"><canvas id="c_cond_clasificacion"></canvas></div></div>
-  <div class="card"><h3>Colaboradores que más reportan<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_cond_colaboradores"></canvas></div></div>
-  <div class="card" style="grid-column:span 2;"><h3>Áreas reportadas por condiciones inseguras<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_cond_areasReportadas"></canvas></div></div>
-  <div class="card"><h3>Descripción</h3><div class="feed" id="f_cond_desc"></div></div>
-</div>
-
-<!-- TAB: Condiciones por Persona -->
-<div class="grid cols1" id="tab-condicionesPersona" style="display:none;">
-  <div class="card"><h3>Condiciones inseguras reportadas por persona<span class="h3-hint">clic en barra = detalle</span></h3>
+<div class="grid cols1" id="tab-condiciones" style="display:none;">
+  <div class="grid" style="padding:0;margin:0 0 18px;">
+    <div class="card"><h3>Condiciones inseguras reportadas por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_cond_porArea"></canvas></div></div>
+    <div class="card"><h3>Principales reportes de condiciones inseguras</h3><div class="chart-wrap"><canvas id="c_cond_clasificacion"></canvas></div></div>
+    <div class="card"><h3>Descripción</h3><div class="feed" id="f_cond_desc"></div></div>
+    <div class="card" style="grid-column:span 3;"><h3>Áreas reportadas por condiciones inseguras<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_cond_areasReportadas"></canvas></div></div>
+  </div>
+  <div class="grid cols1" style="padding:0;margin:0;">
+    <div class="card"><h3>Condiciones inseguras reportadas por persona<span class="h3-hint">clic en barra = detalle</span></h3>
     <input type="text" class="chart-search" id="srchCondPersona" placeholder="Buscar por nombre...">
-    <div class="chart-wrap tall"><canvas id="c_condPersona_full"></canvas></div></div>
-</div>
-
-<!-- TAB: Recuento Actos Inseguros -->
-<div class="grid cols2" id="tab-recuento" style="display:none;">
-  <div class="card"><h3>Actos inseguros cometidos por persona<span class="h3-hint">clic en barra = detalle</span></h3>
-    <input type="text" class="chart-search" id="srchRecuento" placeholder="Buscar por nombre...">
-    <div class="chart-wrap tall"><canvas id="c_recuento_cometidos"></canvas></div></div>
-  <div class="card">
-    <h3>Recuento de clasificación por clasificación</h3>
-    <div class="chart-wrap"><canvas id="c_recuento_clasificacion"></canvas></div>
-    <h3 style="margin-top:16px;">Descripción</h3>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead><tr><th>Descripción</th><th>Especificación</th><th>Fecha</th></tr></thead>
-        <tbody id="t_recuento_desc"></tbody>
-      </table>
-    </div>
+    <div class="chart-wrap tall compact"><canvas id="c_condPersona_full"></canvas></div></div>
   </div>
 </div>
 
@@ -753,7 +749,7 @@ async function loadData(){
     showUpdateBadge();
     await loadNivelSeguridadData();
     initFilters();
-    switchTab('resumen');
+    switchTab((location.hash || '').replace('#','') || 'resumen');
   }catch(err){
     statusEl.textContent = 'Error al cargar los datos: ' + err.message;
     statusEl.classList.add('err');
@@ -889,7 +885,7 @@ function showUpdateBadge(){
 }
 
 function currentDataset(){
-  return (activeTab === 'condiciones' || activeTab === 'condicionesPersona') ? CONDICIONES : ACTOS;
+  return activeTab === 'condiciones' ? CONDICIONES : ACTOS;
 }
 // Both "roles" an area can play in a record (e.g. the act's own area, and the
 // area of whoever reported it). Used to populate the dropdown and for the
@@ -979,26 +975,22 @@ function getFiltered(){
 const TAB_TITLES = {
   resumen: 'Resumen Ejecutivo',
   actos: 'Actos Inseguros',
-  resultado: 'Resultado Actos Inseguros',
   condiciones: 'Condiciones Inseguras',
-  condicionesPersona: 'Condiciones por Persona',
-  recuento: 'Recuento Actos Inseguros',
   nivelSeguridad: 'Nivel de Seguridad',
   triangulo: 'Triángulo de Accidentabilidad',
 };
 const TAB_KPI_LABEL = {
   resumen: '',
   actos: 'Actos reportados',
-  resultado: 'Actos reportados',
   condiciones: 'Condiciones reportadas',
-  condicionesPersona: 'Condiciones reportadas',
-  recuento: 'Actos reportados',
   nivelSeguridad: '',
   triangulo: '',
 };
 
 function switchTab(tab){
+  if (!TAB_TITLES[tab]) tab = 'resumen';
   activeTab = tab;
+  history.replaceState(null, '', '#' + tab);
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
   document.getElementById('tab-' + tab).style.display = 'grid';
@@ -1161,10 +1153,7 @@ function render(){
   document.getElementById('kpiTotal').textContent = rows.length;
 
   if (activeTab === 'actos') renderActos(rows);
-  else if (activeTab === 'resultado') renderResultado(rows);
   else if (activeTab === 'condiciones') renderCondiciones(rows);
-  else if (activeTab === 'condicionesPersona') renderCondicionesPersona(rows);
-  else if (activeTab === 'recuento') renderRecuento(rows);
 }
 
 function renderActos(rows){
@@ -1180,13 +1169,6 @@ function renderActos(rows){
   upsertChart('c_actos_cometidosPorArea', {type:'bar', data:{labels:cometidosPorArea.map(x=>x[0]), datasets:[{data:cometidosPorArea.map(x=>x[1]), backgroundColor:'#2E3B47', borderRadius:4}]}, options:barOpts()});
   onPersonBarClick(charts['c_actos_cometidosPorArea'], cometidosPorArea.map(x=>x[0]), rowsCometida, 'area_reportada', 'Actos cometidos en el área', 'actos');
 
-  const rowsColaboradores = filterByField(rows, 'area_reportada', areaSel);
-  const colaboradores = countBy(rowsColaboradores, 'colaborador', {excludeDash:true});
-  const elColA = document.getElementById('c_actos_colaboradores');
-  elColA.parentElement.style.minHeight = Math.max(230, colaboradores.length * 22) + 'px';
-  upsertChart('c_actos_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#0098D6', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
-  onPersonBarClick(charts['c_actos_colaboradores'], colaboradores.map(x=>x[0]), rowsColaboradores, 'colaborador', 'Actos inseguros cometidos', 'actos');
-
   const especificacion = countBy(rows, 'especificacion');
   upsertChart('c_actos_especificacion', {type:'pie', data:{labels:especificacion.map(x=>x[0]), datasets:[{data:especificacion.map(x=>x[1]), backgroundColor:COLORS}]}, options:pieOpts()});
 
@@ -1201,6 +1183,8 @@ function renderActos(rows){
     div.innerHTML = `<div class="meta"><span>${r.fecha}</span><span class="tag">${escapeHtml(r.area_reportada)}</span></div><p>${escapeHtml(r.descripcion)}</p>`;
     feed.appendChild(div);
   });
+
+  renderActosPersonas(rows);
 }
 
 function filterBySearch(pairs, inputId){
@@ -1213,7 +1197,7 @@ function wireSearch(inputId){
   if (!el.dataset.wired){ el.addEventListener('input', () => render()); el.dataset.wired = '1'; }
 }
 
-function renderResultado(rows){
+function renderActosPersonas(rows){
   const areaSel = document.getElementById('fArea').value;
   wireSearch('srchResCometidos'); wireSearch('srchResReportados');
 
@@ -1251,13 +1235,6 @@ function renderCondiciones(rows){
   const clasificacion = countBy(rows, 'clasificacion');
   upsertChart('c_cond_clasificacion', {type:'pie', data:{labels:clasificacion.map(x=>x[0]), datasets:[{data:clasificacion.map(x=>x[1]), backgroundColor:COLORS}]}, options:pieOpts()});
 
-  const rowsColaboradores = filterByField(rows, 'area_que_reporta', areaSel);
-  const colaboradores = countBy(rowsColaboradores, 'persona');
-  const elColC = document.getElementById('c_cond_colaboradores');
-  elColC.parentElement.style.minHeight = Math.max(230, colaboradores.length * 22) + 'px';
-  upsertChart('c_cond_colaboradores', {type:'bar', data:{labels:colaboradores.map(x=>x[0]), datasets:[{data:colaboradores.map(x=>x[1]), backgroundColor:'#2E3B47', borderRadius:4}]}, options:barOpts({indexAxis:'y'})});
-  onPersonBarClick(charts['c_cond_colaboradores'], colaboradores.map(x=>x[0]), rowsColaboradores, 'persona', 'Condiciones inseguras reportadas', 'condiciones');
-
   const rowsAreasRep = filterByField(rows, 'area_a_reportar', areaSel);
   const areasReportadas = countBy(rowsAreasRep, 'area_a_reportar');
   upsertChart('c_cond_areasReportadas', {type:'bar', data:{labels:areasReportadas.map(x=>x[0]), datasets:[{data:areasReportadas.map(x=>x[1]), backgroundColor:'#5FC1E8', borderRadius:4}]}, options:barOpts()});
@@ -1271,6 +1248,8 @@ function renderCondiciones(rows){
     div.innerHTML = `<div class="meta"><span>${r.fecha}</span><span class="tag">${escapeHtml(r.area_a_reportar)}</span></div><p>${escapeHtml(r.descripcion)}</p>`;
     feed.appendChild(div);
   });
+
+  renderCondicionesPersona(rows);
 }
 
 function renderCondicionesPersona(rows){
@@ -1288,35 +1267,6 @@ function renderCondicionesPersona(rows){
   onPersonBarClick(charts['c_condPersona_full'], personas.map(x=>x[0]), rowsFiltered, 'persona', 'Condiciones inseguras reportadas', 'condiciones');
 }
 
-function renderRecuento(rows){
-  const areaSel = document.getElementById('fArea').value;
-  wireSearch('srchRecuento');
-  const rowsCometidos = filterByField(rows, 'area_reportada', areaSel);
-  const cometidos = filterBySearch(countBy(rowsCometidos, 'colaborador', {excludeDash:true}), 'srchRecuento');
-  const el = document.getElementById('c_recuento_cometidos');
-  el.parentElement.style.minHeight = Math.max(400, cometidos.length * 22) + 'px';
-  upsertChart('c_recuento_cometidos', {
-    type:'bar',
-    data:{labels:cometidos.map(x=>x[0]), datasets:[{data:cometidos.map(x=>x[1]), backgroundColor:'#E32934', borderRadius:3}]},
-    options:barOpts({indexAxis:'y'})
-  });
-  onPersonBarClick(charts['c_recuento_cometidos'], cometidos.map(x=>x[0]), rowsCometidos, 'colaborador', 'Actos inseguros cometidos', 'actos');
-
-  const clasificacion = countBy(rows, 'clasificacion');
-  upsertChart('c_recuento_clasificacion', {
-    type:'doughnut',
-    data:{labels:clasificacion.map(x=>x[0]), datasets:[{data:clasificacion.map(x=>x[1]), backgroundColor:COLORS}]},
-    options:pieOpts()
-  });
-
-  const tbody = document.getElementById('t_recuento_desc');
-  tbody.innerHTML = '';
-  rows.slice().sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,200).forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${escapeHtml(r.descripcion)}</td><td>${escapeHtml(r.especificacion)}</td><td>${r.fecha}</td>`;
-    tbody.appendChild(tr);
-  });
-}
 
 // ---- Nivel de Seguridad tab ----
 let nsSelectedIdx = 0; // numeric index into NS_PERIODS, or 'avg' for the year-to-date average
@@ -1715,6 +1665,37 @@ function renderResumen(){
     triEl.innerHTML = '<div class="modal-empty">Sin datos de accidentabilidad cargados.</div>';
   }
 }
+
+window.addEventListener('hashchange', () => {
+  const t = (location.hash || '').replace('#','');
+  if (t && TAB_TITLES[t] && t !== activeTab) switchTab(t);
+});
+
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('exportBtn');
+  if (typeof html2canvas === 'undefined'){
+    alert('Falta el archivo files/html2canvas.min.js en el repositorio. Súbelo para habilitar la exportación.');
+    return;
+  }
+  const el = document.getElementById('tab-' + activeTab);
+  if (!el) return;
+  btn.disabled = true;
+  const prev = btn.innerHTML;
+  btn.innerHTML = 'Generando…';
+  try{
+    const canvas = await html2canvas(el, { backgroundColor:'#10152A', scale:2, useCORS:true, logging:false });
+    const a = document.createElement('a');
+    const fecha = new Date().toISOString().slice(0,10);
+    a.download = `SSO_${(TAB_TITLES[activeTab]||'dashboard').replace(/ /g,'_')}_${fecha}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  }catch(err){
+    alert('No se pudo generar la imagen: ' + err.message);
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = prev;
+  }
+});
 
 loadData();
 </script>

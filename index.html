@@ -149,6 +149,18 @@
     font-family:var(--font-head);
     padding-bottom:10px;border-bottom:1px solid var(--line);
   }
+  .h3-hint{
+    margin-left:auto;font-size:9.5px;font-weight:600;letter-spacing:0.4px;
+    color:var(--brand-blue);background:rgba(0,152,214,0.12);border:1px solid rgba(0,152,214,0.3);
+    border-radius:20px;padding:3px 9px;text-transform:none;white-space:nowrap;
+  }
+  .chart-search{
+    border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.05);border-radius:9px;
+    padding:8px 12px;font-size:12.5px;color:var(--ink);margin-bottom:12px;width:100%;
+    font-family:inherit;
+  }
+  .chart-search::placeholder{color:var(--ink-soft);}
+  .chart-search:focus{outline:2px solid var(--brand-deep);outline-offset:1px;}
   .card h3::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--brand-deep);box-shadow:0 0 10px var(--glow);display:inline-block;flex-shrink:0;}
   .chart-wrap{position:relative;flex:1;min-height:230px;}
   .chart-wrap.tall{min-height:520px;}
@@ -432,9 +444,9 @@
 
 <!-- TAB: Actos Inseguros -->
 <div class="grid" id="tab-actos" style="display:none;">
-  <div class="card"><h3>Actos reportados por área</h3><div class="chart-wrap"><canvas id="c_actos_reportadaPorArea"></canvas></div></div>
-  <div class="card"><h3>Actos cometidos por área</h3><div class="chart-wrap"><canvas id="c_actos_cometidosPorArea"></canvas></div></div>
-  <div class="card"><h3>Colaboradores más reportados</h3><div class="chart-wrap"><canvas id="c_actos_colaboradores"></canvas></div></div>
+  <div class="card"><h3>Actos reportados por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_actos_reportadaPorArea"></canvas></div></div>
+  <div class="card"><h3>Actos cometidos por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_actos_cometidosPorArea"></canvas></div></div>
+  <div class="card"><h3>Colaboradores más reportados<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_actos_colaboradores"></canvas></div></div>
   <div class="card"><h3>Principales actos inseguros</h3><div class="chart-wrap"><canvas id="c_actos_especificacion"></canvas></div></div>
   <div class="card"><h3>Clasificación de actos inseguros</h3><div class="chart-wrap"><canvas id="c_actos_clasificacion"></canvas></div></div>
   <div class="card"><h3>Descripción de reportes</h3><div class="feed" id="f_actos_desc"></div></div>
@@ -442,27 +454,35 @@
 
 <!-- TAB: Resultado Actos Inseguros -->
 <div class="grid cols2" id="tab-resultado" style="display:none;">
-  <div class="card"><h3>Actos inseguros cometidos por persona</h3><div class="chart-wrap tall"><canvas id="c_resultado_cometidos"></canvas></div></div>
-  <div class="card"><h3>Actos inseguros reportados por persona</h3><div class="chart-wrap tall"><canvas id="c_resultado_reportados"></canvas></div></div>
+  <div class="card"><h3>Actos inseguros cometidos por persona<span class="h3-hint">clic en barra = detalle</span></h3>
+    <input type="text" class="chart-search" id="srchResCometidos" placeholder="Buscar por nombre...">
+    <div class="chart-wrap tall"><canvas id="c_resultado_cometidos"></canvas></div></div>
+  <div class="card"><h3>Actos inseguros reportados por persona<span class="h3-hint">clic en barra = detalle</span></h3>
+    <input type="text" class="chart-search" id="srchResReportados" placeholder="Buscar por nombre...">
+    <div class="chart-wrap tall"><canvas id="c_resultado_reportados"></canvas></div></div>
 </div>
 
 <!-- TAB: Condiciones Inseguras -->
 <div class="grid" id="tab-condiciones" style="display:none;">
-  <div class="card"><h3>Condiciones inseguras reportadas por área</h3><div class="chart-wrap"><canvas id="c_cond_porArea"></canvas></div></div>
+  <div class="card"><h3>Condiciones inseguras reportadas por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_cond_porArea"></canvas></div></div>
   <div class="card"><h3>Principales reportes de condiciones inseguras</h3><div class="chart-wrap"><canvas id="c_cond_clasificacion"></canvas></div></div>
-  <div class="card"><h3>Colaboradores que más reportan</h3><div class="chart-wrap"><canvas id="c_cond_colaboradores"></canvas></div></div>
-  <div class="card" style="grid-column:span 2;"><h3>Áreas reportadas por condiciones inseguras</h3><div class="chart-wrap"><canvas id="c_cond_areasReportadas"></canvas></div></div>
+  <div class="card"><h3>Colaboradores que más reportan<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_cond_colaboradores"></canvas></div></div>
+  <div class="card" style="grid-column:span 2;"><h3>Áreas reportadas por condiciones inseguras<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_cond_areasReportadas"></canvas></div></div>
   <div class="card"><h3>Descripción</h3><div class="feed" id="f_cond_desc"></div></div>
 </div>
 
 <!-- TAB: Condiciones por Persona -->
 <div class="grid cols1" id="tab-condicionesPersona" style="display:none;">
-  <div class="card"><h3>Condiciones inseguras reportadas por persona</h3><div class="chart-wrap tall"><canvas id="c_condPersona_full"></canvas></div></div>
+  <div class="card"><h3>Condiciones inseguras reportadas por persona<span class="h3-hint">clic en barra = detalle</span></h3>
+    <input type="text" class="chart-search" id="srchCondPersona" placeholder="Buscar por nombre...">
+    <div class="chart-wrap tall"><canvas id="c_condPersona_full"></canvas></div></div>
 </div>
 
 <!-- TAB: Recuento Actos Inseguros -->
 <div class="grid cols2" id="tab-recuento" style="display:none;">
-  <div class="card"><h3>Actos inseguros cometidos por persona</h3><div class="chart-wrap tall"><canvas id="c_recuento_cometidos"></canvas></div></div>
+  <div class="card"><h3>Actos inseguros cometidos por persona<span class="h3-hint">clic en barra = detalle</span></h3>
+    <input type="text" class="chart-search" id="srchRecuento" placeholder="Buscar por nombre...">
+    <div class="chart-wrap tall"><canvas id="c_recuento_cometidos"></canvas></div></div>
   <div class="card">
     <h3>Recuento de clasificación por clasificación</h3>
     <div class="chart-wrap"><canvas id="c_recuento_clasificacion"></canvas></div>
@@ -1183,11 +1203,22 @@ function renderActos(rows){
   });
 }
 
+function filterBySearch(pairs, inputId){
+  const q = (document.getElementById(inputId).value || '').trim().toLowerCase();
+  if (!q) return pairs;
+  return pairs.filter(([name]) => name.toLowerCase().includes(q));
+}
+function wireSearch(inputId){
+  const el = document.getElementById(inputId);
+  if (!el.dataset.wired){ el.addEventListener('input', () => render()); el.dataset.wired = '1'; }
+}
+
 function renderResultado(rows){
   const areaSel = document.getElementById('fArea').value;
+  wireSearch('srchResCometidos'); wireSearch('srchResReportados');
 
   const rowsCometidos = filterByField(rows, 'area_reportada', areaSel);
-  const cometidos = countBy(rowsCometidos, 'colaborador', {excludeDash:true});
+  const cometidos = filterBySearch(countBy(rowsCometidos, 'colaborador', {excludeDash:true}), 'srchResCometidos');
   const elC = document.getElementById('c_resultado_cometidos');
   elC.parentElement.style.minHeight = Math.max(400, cometidos.length * 22) + 'px';
   upsertChart('c_resultado_cometidos', {
@@ -1198,7 +1229,7 @@ function renderResultado(rows){
   onPersonBarClick(charts['c_resultado_cometidos'], cometidos.map(x=>x[0]), rowsCometidos, 'colaborador', 'Actos inseguros cometidos', 'actos');
 
   const rowsReportados = filterByField(rows, 'area_que_reporta', areaSel);
-  const reportados = countBy(rowsReportados, 'reporto', {excludeDash:true});
+  const reportados = filterBySearch(countBy(rowsReportados, 'reporto', {excludeDash:true}), 'srchResReportados');
   const elR = document.getElementById('c_resultado_reportados');
   elR.parentElement.style.minHeight = Math.max(400, reportados.length * 22) + 'px';
   upsertChart('c_resultado_reportados', {
@@ -1244,8 +1275,9 @@ function renderCondiciones(rows){
 
 function renderCondicionesPersona(rows){
   const areaSel = document.getElementById('fArea').value;
+  wireSearch('srchCondPersona');
   const rowsFiltered = filterByField(rows, 'area_que_reporta', areaSel);
-  const personas = countBy(rowsFiltered, 'persona');
+  const personas = filterBySearch(countBy(rowsFiltered, 'persona'), 'srchCondPersona');
   const el = document.getElementById('c_condPersona_full');
   el.parentElement.style.minHeight = Math.max(400, personas.length * 22) + 'px';
   upsertChart('c_condPersona_full', {
@@ -1258,8 +1290,9 @@ function renderCondicionesPersona(rows){
 
 function renderRecuento(rows){
   const areaSel = document.getElementById('fArea').value;
+  wireSearch('srchRecuento');
   const rowsCometidos = filterByField(rows, 'area_reportada', areaSel);
-  const cometidos = countBy(rowsCometidos, 'colaborador', {excludeDash:true});
+  const cometidos = filterBySearch(countBy(rowsCometidos, 'colaborador', {excludeDash:true}), 'srchRecuento');
   const el = document.getElementById('c_recuento_cometidos');
   el.parentElement.style.minHeight = Math.max(400, cometidos.length * 22) + 'px';
   upsertChart('c_recuento_cometidos', {

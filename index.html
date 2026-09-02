@@ -62,7 +62,7 @@
   .side-brand-txt{display:flex;flex-direction:column;gap:2px;}
   .side-brand-txt strong{font-size:13.5px;font-family:var(--font-head);letter-spacing:0.4px;color:#fff;}
   .side-brand-txt span{font-size:9.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.8px;}
-  .side-foot{margin-top:auto;padding:14px 8px 4px;font-size:10px;color:#586183;letter-spacing:0.6px;text-transform:uppercase;border-top:1px solid var(--line);}
+  .side-foot{padding:14px 8px 4px;font-size:10px;color:#586183;letter-spacing:0.6px;text-transform:uppercase;border-top:1px solid var(--line);}
 
   .tabs{display:flex;flex-direction:column;gap:4px;}
   .tab-btn{
@@ -97,6 +97,37 @@
   }
   .kpi .num{font-family:'Consolas','Courier New',monospace;font-size:34px;font-weight:800;color:var(--brand-blue);line-height:1;letter-spacing:1px;text-shadow:0 0 16px var(--glow);}
   .kpi .label{font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.9px;margin-top:5px;}
+
+  .hero{
+    position:relative;border-radius:14px;overflow:hidden;
+    min-height:170px;display:flex;align-items:flex-end;
+    background:url('./files/foto-planta.jpg') center 40%/cover no-repeat;
+    border:1px solid var(--line);
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(90deg, rgba(13,18,38,0.92) 0%, rgba(13,18,38,0.55) 45%, rgba(13,18,38,0.15) 100%);
+  }
+  .hero-txt{position:relative;padding:20px 24px;}
+  .hero-txt h2{margin:0;font-size:24px;font-family:var(--font-head);text-transform:uppercase;letter-spacing:1px;color:#fff;}
+  .hero-txt p{margin:5px 0 0;font-size:12.5px;color:#BFD3E8;letter-spacing:0.4px;}
+  .hero-mascota{
+    position:absolute;right:22px;bottom:0;height:92%;z-index:1;
+    filter:drop-shadow(0 4px 14px rgba(0,0,0,0.5));
+  }
+  .side-deco{margin-top:auto;text-align:center;padding-top:10px;}
+  .side-mascota{height:120px;opacity:0.95;filter:drop-shadow(0 3px 10px rgba(0,0,0,0.5));}
+  .side-foot{display:flex;align-items:center;justify-content:center;gap:10px;}
+  .side-cbc{height:34px;width:auto;}
+  .card-export{
+    margin-left:8px;border:none;background:rgba(0,152,214,0.14);color:var(--brand-blue);
+    border-radius:7px;width:26px;height:26px;cursor:pointer;flex-shrink:0;
+    display:inline-flex;align-items:center;justify-content:center;padding:0;
+  }
+  .card-export svg{width:14px;height:14px;fill:currentColor;}
+  .card-export:hover{background:var(--brand-deep);color:#fff;}
+  .card-export:disabled{opacity:0.4;cursor:wait;}
 
   .mainbar-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
   .export-btn{
@@ -357,7 +388,13 @@
     <button class="tab-btn" data-tab="triangulo"><svg viewBox="0 0 24 24"><path d="M12 4l10 17H2L12 4zm0 4.5L6.5 18h11L12 8.5z"/></svg>Accidentabilidad</button>
   </nav>
 
-  <div class="side-foot">Dashboard SSO · 2026</div>
+  <div class="side-deco">
+    <img src="./files/mascota-h.png" alt="" class="side-mascota">
+  </div>
+  <div class="side-foot">
+    <img src="./files/logo-cbc.png" alt="CBC" class="side-cbc">
+    <span>Dashboard SSO · 2026</span>
+  </div>
 </aside>
 
 <main class="main">
@@ -397,6 +434,13 @@
 
 <!-- TAB: Resumen ejecutivo -->
 <div class="grid cols1" id="tab-resumen" style="display:none;">
+  <div class="hero" style="margin-bottom:18px;">
+    <img class="hero-mascota" src="./files/mascota-m.png" alt="">
+    <div class="hero-txt">
+      <h2>Planta Cuyotenango</h2>
+      <p>Llevamos la seguridad en el ADN</p>
+    </div>
+  </div>
   <div class="card" style="margin-bottom:18px;">
     <div class="field" style="min-width:220px;">
       <label for="fRsMes">Mes</label>
@@ -461,17 +505,17 @@
 <!-- TAB: Actos Inseguros -->
 <div class="grid cols1" id="tab-actos" style="display:none;">
   <div class="grid" style="padding:0;margin:0 0 18px;">
-    <div class="card"><h3>Actos reportados por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_actos_reportadaPorArea"></canvas></div></div>
-    <div class="card"><h3>Actos cometidos por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_actos_cometidosPorArea"></canvas></div></div>
+    <div class="card"><h3>Actos reportados por área<span class="h3-hint">clic en barra = detalle</span><button class="card-export" title="Descargar este tablero en alta resolución"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button></h3><div class="chart-wrap"><canvas id="c_actos_reportadaPorArea"></canvas></div></div>
+    <div class="card"><h3>Actos cometidos por área<span class="h3-hint">clic en barra = detalle</span><button class="card-export" title="Descargar este tablero en alta resolución"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button></h3><div class="chart-wrap"><canvas id="c_actos_cometidosPorArea"></canvas></div></div>
     <div class="card"><h3>Principales actos inseguros</h3><div class="chart-wrap"><canvas id="c_actos_especificacion"></canvas></div></div>
     <div class="card"><h3>Clasificación de actos inseguros</h3><div class="chart-wrap"><canvas id="c_actos_clasificacion"></canvas></div></div>
     <div class="card" style="grid-column:span 2;"><h3>Descripción de reportes</h3><div class="feed" id="f_actos_desc"></div></div>
   </div>
   <div class="grid cols2" style="padding:0;margin:0;">
-    <div class="card"><h3>Actos inseguros cometidos por persona<span class="h3-hint">clic en barra = detalle</span></h3>
+    <div class="card"><h3>Actos inseguros cometidos por persona<span class="h3-hint">clic en barra = detalle</span><button class="card-export" title="Descargar este tablero en alta resolución"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button></h3>
     <input type="text" class="chart-search" id="srchResCometidos" placeholder="Buscar por nombre...">
     <div class="chart-wrap tall compact"><canvas id="c_resultado_cometidos"></canvas></div></div>
-    <div class="card"><h3>Actos inseguros reportados por persona<span class="h3-hint">clic en barra = detalle</span></h3>
+    <div class="card"><h3>Actos inseguros reportados por persona<span class="h3-hint">clic en barra = detalle</span><button class="card-export" title="Descargar este tablero en alta resolución"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button></h3>
     <input type="text" class="chart-search" id="srchResReportados" placeholder="Buscar por nombre...">
     <div class="chart-wrap tall compact"><canvas id="c_resultado_reportados"></canvas></div></div>
   </div>
@@ -480,13 +524,13 @@
 <!-- TAB: Condiciones Inseguras -->
 <div class="grid cols1" id="tab-condiciones" style="display:none;">
   <div class="grid" style="padding:0;margin:0 0 18px;">
-    <div class="card"><h3>Condiciones inseguras reportadas por área<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_cond_porArea"></canvas></div></div>
+    <div class="card"><h3>Condiciones inseguras reportadas por área<span class="h3-hint">clic en barra = detalle</span><button class="card-export" title="Descargar este tablero en alta resolución"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button></h3><div class="chart-wrap"><canvas id="c_cond_porArea"></canvas></div></div>
     <div class="card"><h3>Principales reportes de condiciones inseguras</h3><div class="chart-wrap"><canvas id="c_cond_clasificacion"></canvas></div></div>
     <div class="card"><h3>Descripción</h3><div class="feed" id="f_cond_desc"></div></div>
-    <div class="card" style="grid-column:span 3;"><h3>Áreas reportadas por condiciones inseguras<span class="h3-hint">clic en barra = detalle</span></h3><div class="chart-wrap"><canvas id="c_cond_areasReportadas"></canvas></div></div>
+    <div class="card" style="grid-column:span 3;"><h3>Áreas reportadas por condiciones inseguras<span class="h3-hint">clic en barra = detalle</span><button class="card-export" title="Descargar este tablero en alta resolución"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button></h3><div class="chart-wrap"><canvas id="c_cond_areasReportadas"></canvas></div></div>
   </div>
   <div class="grid cols1" style="padding:0;margin:0;">
-    <div class="card"><h3>Condiciones inseguras reportadas por persona<span class="h3-hint">clic en barra = detalle</span></h3>
+    <div class="card"><h3>Condiciones inseguras reportadas por persona<span class="h3-hint">clic en barra = detalle</span><button class="card-export" title="Descargar este tablero en alta resolución"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button></h3>
     <input type="text" class="chart-search" id="srchCondPersona" placeholder="Buscar por nombre...">
     <div class="chart-wrap tall compact"><canvas id="c_condPersona_full"></canvas></div></div>
   </div>
@@ -660,6 +704,7 @@
 <script>
 const COLORS = ['#29B6F6','#5FC1E8','#0077AD','#8FA8C8','#7FD4F0','#3E76A8','#B0CBE0','#1B6E9C','#9FE2FF','#5B7B9A'];
 Chart.defaults.color = '#93A0BE';
+Chart.defaults.devicePixelRatio = 2;
 Chart.defaults.borderColor = 'rgba(255,255,255,0.08)';
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -1669,6 +1714,33 @@ function renderResumen(){
 window.addEventListener('hashchange', () => {
   const t = (location.hash || '').replace('#','');
   if (t && TAB_TITLES[t] && t !== activeTab) switchTab(t);
+});
+
+document.addEventListener('click', async (ev) => {
+  const btn = ev.target.closest('.card-export');
+  if (!btn) return;
+  if (typeof html2canvas === 'undefined'){
+    alert('Falta el archivo files/html2canvas.min.js en el repositorio.');
+    return;
+  }
+  const card = btn.closest('.card');
+  if (!card) return;
+  btn.disabled = true;
+  try{
+    const h3 = card.querySelector('h3');
+    const titulo = h3 ? h3.childNodes[0].textContent.trim() : 'tablero';
+    const canvas = await html2canvas(card, { backgroundColor:'#141A33', scale:3, useCORS:true, logging:false,
+      ignoreElements: el => el.classList && (el.classList.contains('card-export') || el.classList.contains('h3-hint') || el.classList.contains('chart-search')) });
+    const a = document.createElement('a');
+    const fecha = new Date().toISOString().slice(0,10);
+    a.download = `SSO_${titulo.replace(/ /g,'_')}_${fecha}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  }catch(err){
+    alert('No se pudo generar la imagen: ' + err.message);
+  }finally{
+    btn.disabled = false;
+  }
 });
 
 document.getElementById('exportBtn').addEventListener('click', async () => {

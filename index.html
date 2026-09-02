@@ -296,7 +296,8 @@
 </div>
 
 <div class="tabs" id="tabs">
-  <button class="tab-btn active" data-tab="actos">Actos Inseguros</button>
+  <button class="tab-btn active" data-tab="resumen">Resumen</button>
+  <button class="tab-btn" data-tab="actos">Actos Inseguros</button>
   <button class="tab-btn" data-tab="resultado">Resultado Actos Inseguros</button>
   <button class="tab-btn" data-tab="condiciones">Condiciones Inseguras</button>
   <button class="tab-btn" data-tab="condicionesPersona">Condiciones por Persona</button>
@@ -321,6 +322,63 @@
   </div>
 </div>
 <div class="status" id="statusMsg">Cargando datos del archivo BD_Resultados_SSO.xlsx…</div>
+
+<!-- TAB: Resumen ejecutivo -->
+<div class="grid cols1" id="tab-resumen" style="display:none;">
+  <div class="grid grid-kpi4" style="padding:0;margin:0 0 18px;">
+    <div class="card">
+      <h3>Nivel de seguridad — planta</h3>
+      <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
+        <div id="rsNsBadge" style="text-align:center;border-radius:10px;padding:10px 22px;">
+          <div style="font-family:'Consolas','Courier New',monospace;font-size:38px;font-weight:800;" id="rsNsPct">–</div>
+          <div style="font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.4px;" id="rsNsMes">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Actos inseguros — mes</h3>
+      <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;">
+          <div style="font-family:'Consolas','Courier New',monospace;font-size:38px;font-weight:800;color:var(--brand-blue);" id="rsActosMes">–</div>
+          <div style="font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.4px;">Acumulado año: <strong id="rsActosYtd">–</strong></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Condiciones inseguras — mes</h3>
+      <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;">
+          <div style="font-family:'Consolas','Courier New',monospace;font-size:38px;font-weight:800;color:var(--brand-blue);" id="rsCondMes">–</div>
+          <div style="font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.4px;">Acumulado año: <strong id="rsCondYtd">–</strong></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Semáforo de áreas</h3>
+      <div class="chart-wrap" style="min-height:110px;display:flex;align-items:center;justify-content:center;gap:14px;">
+        <div style="text-align:center;"><div style="font-family:'Consolas','Courier New',monospace;font-size:30px;font-weight:800;color:#2FA84F;" id="rsVerde">–</div><div style="font-size:9.5px;color:var(--ink-soft);text-transform:uppercase;">Verde</div></div>
+        <div style="text-align:center;"><div style="font-family:'Consolas','Courier New',monospace;font-size:30px;font-weight:800;color:#C99A1E;" id="rsAmarillo">–</div><div style="font-size:9.5px;color:var(--ink-soft);text-transform:uppercase;">Amarillo</div></div>
+        <div style="text-align:center;"><div style="font-family:'Consolas','Courier New',monospace;font-size:30px;font-weight:800;color:var(--red);" id="rsRojo">–</div><div style="font-size:9.5px;color:var(--ink-soft);text-transform:uppercase;">Rojo</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-tri" style="padding:0;margin:0 0 18px;">
+    <div class="card">
+      <h3>Días sin accidentes</h3>
+      <div id="rsDiasCards" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;"></div>
+    </div>
+    <div class="card">
+      <h3>Accidentabilidad — acumulado del año</h3>
+      <div id="rsTriResumen" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Nivel de seguridad por área — mes vigente</h3>
+    <div class="chart-wrap tall" style="min-height:420px;"><canvas id="c_rs_nsPorArea"></canvas></div>
+  </div>
+</div>
 
 <!-- TAB: Actos Inseguros -->
 <div class="grid" id="tab-actos" style="display:none;">
@@ -563,7 +621,7 @@ function parseFecha(fv){
 async function loadData(){
   const statusEl = document.getElementById('statusMsg');
   try{
-    const res = await fetch('./BD_Resultados_SSO.xlsx');
+    const res = await fetch('./BD_Resultados_SSO.xlsx?v=' + Date.now(), {cache:'no-store'});
     if (!res.ok) throw new Error('No se encontró el archivo BD_Resultados_SSO.xlsx junto a esta página.');
     const buf = await res.arrayBuffer();
     const wb = XLSX.read(buf, {type:'array', cellDates:true});
@@ -620,7 +678,7 @@ async function loadData(){
     showUpdateBadge();
     await loadNivelSeguridadData();
     initFilters();
-    switchTab('actos');
+    switchTab('resumen');
   }catch(err){
     statusEl.textContent = 'Error al cargar los datos: ' + err.message;
     statusEl.classList.add('err');
@@ -634,7 +692,7 @@ const NS_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agos
 
 async function loadNivelSeguridadData(){
   try{
-    const res = await fetch('./NUEVO_NIVEL_DE_SEGURIDAD_2026_CBC-CUYOTENANGO.xlsx');
+    const res = await fetch('./NUEVO_NIVEL_DE_SEGURIDAD_2026_CBC-CUYOTENANGO.xlsx?v=' + Date.now(), {cache:'no-store'});
     if (!res.ok) return; // optional file, skip silently if not present yet
     const buf = await res.arrayBuffer();
     const wb = XLSX.read(buf, {type:'array', cellDates:true});
@@ -844,6 +902,7 @@ function getFiltered(){
 }
 
 const TAB_TITLES = {
+  resumen: 'Resumen Ejecutivo',
   actos: 'Actos Inseguros',
   resultado: 'Resultado Actos Inseguros',
   condiciones: 'Condiciones Inseguras',
@@ -853,6 +912,7 @@ const TAB_TITLES = {
   triangulo: 'Triángulo de Accidentabilidad',
 };
 const TAB_KPI_LABEL = {
+  resumen: '',
   actos: 'Actos reportados',
   resultado: 'Actos reportados',
   condiciones: 'Condiciones reportadas',
@@ -872,7 +932,11 @@ function switchTab(tab){
 
   const filtersBar = document.querySelector('.filters');
   const kpiBox = document.querySelector('.kpi');
-  if (tab === 'nivelSeguridad'){
+  if (tab === 'resumen'){
+    filtersBar.style.display = 'none';
+    kpiBox.style.display = 'none';
+    renderResumen();
+  } else if (tab === 'nivelSeguridad'){
     filtersBar.style.display = 'none';
     kpiBox.style.display = 'none';
     initNivelSeguridadTab();
@@ -1421,6 +1485,101 @@ function renderTriangulo(){
       : `<div class="val">${dias}</div><div class="lbl">${cat}</div><div class="sub">Desde ${fecha}</div>`;
     cardsEl.appendChild(card);
   });
+}
+
+// ---- Resumen ejecutivo (portada) ----
+function renderResumen(){
+  const year = new Date().getFullYear();
+  const monthIdx = new Date().getMonth();
+  const mStr = `${year}-${String(monthIdx+1).padStart(2,'0')}`;
+
+  // Nivel de seguridad: último mes con datos cargados
+  if (NS_PERIODS.length){
+    const last = NS_PERIODS[NS_PERIODS.length-1];
+    const pct = last.plantTotal || 0;
+    const badge = document.getElementById('rsNsBadge');
+    document.getElementById('rsNsPct').textContent = Math.round(pct*100) + '%';
+    document.getElementById('rsNsPct').style.color = nsSemaforoColor(pct);
+    badge.style.background = nsSemaforoBg(pct);
+    document.getElementById('rsNsMes').textContent = last.mes + ' ' + year;
+
+    let verde=0, amarillo=0, rojo=0;
+    last.areas.forEach(a => {
+      const s = nsSemaforoLabel(a.nivel);
+      if (s === 'Verde') verde++; else if (s === 'Amarillo') amarillo++; else rojo++;
+    });
+    document.getElementById('rsVerde').textContent = verde;
+    document.getElementById('rsAmarillo').textContent = amarillo;
+    document.getElementById('rsRojo').textContent = rojo;
+
+    const sorted = last.areas.slice().sort((a,b) => a.nivel - b.nivel);
+    const el = document.getElementById('c_rs_nsPorArea');
+    el.parentElement.style.minHeight = Math.max(420, sorted.length * 26) + 'px';
+    upsertChart('c_rs_nsPorArea', {
+      type:'bar',
+      data:{
+        labels: sorted.map(a => a.area),
+        datasets:[{ data: sorted.map(a => Math.round(a.nivel*100)), backgroundColor: sorted.map(a => nsSemaforoColor(a.nivel)), borderRadius:3 }]
+      },
+      options: barOpts({ indexAxis:'y', scales:{ x:{min:0, max:100, ticks:{callback:v=>v+'%'}} } })
+    });
+  }
+
+  // Actos / Condiciones: mes actual + acumulado año
+  const actosMes = ACTOS.filter(r => r.fecha.startsWith(mStr)).length;
+  const actosYtd = ACTOS.filter(r => r.fecha.startsWith(String(year))).length;
+  const condMes = CONDICIONES.filter(r => r.fecha.startsWith(mStr)).length;
+  const condYtd = CONDICIONES.filter(r => r.fecha.startsWith(String(year))).length;
+  document.getElementById('rsActosMes').textContent = actosMes;
+  document.getElementById('rsActosYtd').textContent = actosYtd;
+  document.getElementById('rsCondMes').textContent = condMes;
+  document.getElementById('rsCondYtd').textContent = condYtd;
+
+  // Días sin accidentes
+  const diasEl = document.getElementById('rsDiasCards');
+  diasEl.innerHTML = '';
+  const ultimos = (TRI_DATA && TRI_DATA.ultimos) || {};
+  ['LTI','MDI','MTI','FAI'].forEach(cat => {
+    const fecha = ultimos[cat];
+    let dias = null;
+    if (fecha){
+      const lastD = new Date(fecha + 'T00:00:00');
+      const today = new Date(); today.setHours(0,0,0,0);
+      dias = Math.max(0, Math.round((today - lastD) / 86400000));
+    }
+    const card = document.createElement('div');
+    card.className = 'dias-card';
+    card.innerHTML = dias == null
+      ? `<div class="val" style="color:var(--ink-soft);font-size:18px;">Sin registro</div><div class="lbl">${cat}</div>`
+      : `<div class="val" style="font-size:30px;">${dias}</div><div class="lbl">${cat}</div>`;
+    diasEl.appendChild(card);
+  });
+
+  // Accidentabilidad acumulada del año
+  const triEl = document.getElementById('rsTriResumen');
+  triEl.innerHTML = '';
+  if (TRI_MONTHLY.length){
+    const ytd = {incidentes:0,fai:0,mti:0,mdi:0,lti:0};
+    TRI_MONTHLY.forEach(m => {
+      const idx = MESES.indexOf(m.mes);
+      if (idx >= 0 && idx <= monthIdx){
+        ytd.incidentes += m.incidentes; ytd.fai += m.fai; ytd.mti += m.mti; ytd.mdi += m.mdi; ytd.lti += m.lti;
+      }
+    });
+    const items = [
+      ['LTI (Incapacitante)', ytd.lti], ['MDI (Días perdidos)', ytd.mdi], ['MTI (Trat. médico)', ytd.mti],
+      ['FAI (Prim. auxilios)', ytd.fai], ['Incidentes', ytd.incidentes],
+    ];
+    items.forEach(([lbl, v]) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid #F0F1F4;';
+      row.innerHTML = `<span style="font-size:12.5px;font-weight:600;color:var(--navy);">${lbl}</span>
+        <span style="font-family:'Consolas','Courier New',monospace;font-size:20px;font-weight:800;color:${v>0?'var(--red)':'#2FA84F'};">${v}</span>`;
+      triEl.appendChild(row);
+    });
+  } else {
+    triEl.innerHTML = '<div class="modal-empty">Sin datos de accidentabilidad cargados.</div>';
+  }
 }
 
 loadData();

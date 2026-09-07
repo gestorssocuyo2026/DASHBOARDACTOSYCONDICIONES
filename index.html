@@ -120,6 +120,33 @@
   .side-mascota{height:120px;opacity:0.95;filter:drop-shadow(0 3px 10px rgba(0,0,0,0.5));}
   .side-foot{display:flex;align-items:center;justify-content:center;gap:10px;}
   .side-cbc{height:34px;width:auto;}
+  .slide{
+    position:fixed;left:-99999px;top:0;width:1920px;
+    background:#FFFFFF;color:#16232F;font-family:'Segoe UI',system-ui,sans-serif;
+    padding:0 0 26px;
+  }
+  .slide-banner{
+    background:#0E2038;color:#fff;text-align:center;
+    font-size:34px;font-weight:800;padding:16px 20px;letter-spacing:0.5px;
+    position:relative;
+  }
+  .slide-banner img{position:absolute;right:22px;top:50%;transform:translateY(-50%);height:52px;}
+  .slide-meta{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:16px 26px;
+  }
+  .slide-meta img{height:56px;background:#fff;border-radius:8px;}
+  .slide-chip{
+    border:2px solid #0E2038;border-radius:10px;overflow:hidden;text-align:center;min-width:230px;
+  }
+  .slide-chip .t{background:#0E2038;color:#fff;font-weight:700;font-size:15px;padding:7px 14px;}
+  .slide-chip .v{font-size:34px;font-weight:800;padding:8px 14px;font-family:'Consolas',monospace;}
+  .slide-body{display:flex;gap:18px;padding:0 26px;}
+  .slide-col{display:flex;flex-direction:column;gap:18px;}
+  .slide-panel{border:1.5px solid #C9D1D9;border-radius:8px;overflow:hidden;background:#fff;flex-shrink:0;}
+  .slide-panel-h{background:#0E2038;color:#fff;font-weight:700;font-size:16px;text-align:center;padding:9px 12px;}
+  .slide-panel-b{padding:12px 14px;position:relative;}
+
   .card-export{
     margin-left:8px;border:none;background:rgba(0,152,214,0.14);color:var(--brand-blue);
     border-radius:7px;width:26px;height:26px;cursor:pointer;flex-shrink:0;
@@ -404,6 +431,10 @@
     <p class="mainbar-sub">Planta Cuyotenango · Salud y Seguridad Ocupacional</p>
   </div>
   <div class="mainbar-actions">
+    <button class="export-btn" id="exportSlideBtn" style="display:none;" title="Descarga una lámina horizontal lista para presentación">
+      <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+      Exportar lámina
+    </button>
     <button class="export-btn" id="exportBtn" title="Descarga la pestaña actual como imagen PNG">
       <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
       Exportar imagen
@@ -1044,6 +1075,7 @@ function switchTab(tab){
 
   const filtersBar = document.querySelector('.filters');
   const kpiBox = document.querySelector('.kpi');
+  document.getElementById('exportSlideBtn').style.display = (tab === 'actos' || tab === 'condiciones') ? 'flex' : 'none';
   if (tab === 'resumen'){
     filtersBar.style.display = 'none';
     kpiBox.style.display = 'none';
@@ -1090,7 +1122,7 @@ const valueLabelPlugin = {
     const { ctx } = chart;
     ctx.save();
     ctx.font = '600 11px Segoe UI, system-ui, sans-serif';
-    ctx.fillStyle = '#E8EDF7';
+    ctx.fillStyle = (chart.options.plugins && chart.options.plugins.valueLabels && chart.options.plugins.valueLabels.color) || '#E8EDF7';
     const horiz = chart.options.indexAxis === 'y';
     chart.data.datasets.forEach((dataset, dsIndex) => {
       const meta = chart.getDatasetMeta(dsIndex);
@@ -1710,6 +1742,129 @@ function renderResumen(){
     triEl.innerHTML = '<div class="modal-empty">Sin datos de accidentabilidad cargados.</div>';
   }
 }
+
+// ---- Exportar lámina de presentación (formato horizontal, tema claro) ----
+function slideChart(canvasId, labels, data, color, horizontal){
+  const dark = '#16232F';
+  return new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor:color, borderRadius:3,
+      barPercentage:0.75, categoryPercentage:0.82 }] },
+    options:{
+      responsive:false, animation:false, devicePixelRatio:2,
+      indexAxis: horizontal ? 'y' : 'x',
+      layout:{ padding: horizontal ? {right:44} : {top:26} },
+      plugins:{ legend:{display:false}, valueLabels:{color:dark} },
+      scales: horizontal ? {
+        x:{ beginAtZero:true, ticks:{color:dark, font:{size:11}, precision:0}, grid:{display:false} },
+        y:{ ticks:{color:dark, font:{size:11}, autoSkip:false}, grid:{display:false} }
+      } : {
+        x:{ ticks:{color:dark, font:{size:11}, autoSkip:false, maxRotation:55, minRotation:45}, grid:{display:false} },
+        y:{ beginAtZero:true, ticks:{color:dark, font:{size:11}, precision:0}, grid:{color:'#E9EDF2'} }
+      }
+    }
+  });
+}
+
+function slidePanel(titulo, canvasId, w, h){
+  return `<div class="slide-panel" style="width:${w}px;">
+    <div class="slide-panel-h">${titulo}</div>
+    <div class="slide-panel-b"><canvas id="${canvasId}" width="${w-32}" height="${h}"></canvas></div>
+  </div>`;
+}
+
+async function exportSlide(){
+  const btn = document.getElementById('exportSlideBtn');
+  if (typeof html2canvas === 'undefined'){
+    alert('Falta el archivo files/html2canvas.min.js en el repositorio.');
+    return;
+  }
+  const rows = getFiltered();
+  const areaSel = document.getElementById('fArea').value;
+  const mesTxt = document.getElementById('fMes').selectedOptions[0] ? document.getElementById('fMes').selectedOptions[0].textContent : '';
+  const fecha = new Date().toISOString().slice(0,10);
+  const esActos = activeTab === 'actos';
+  const titulo = esActos ? 'Actos Inseguros Planta Cuyotenango' : 'Condiciones Inseguras Planta Cuyotenango';
+  const kpiLbl = esActos ? 'Actos Inseguros Reportados' : 'Condiciones Inseguras Reportadas';
+
+  btn.disabled = true;
+  const prev = btn.innerHTML;
+  btn.innerHTML = 'Generando…';
+
+  const slide = document.createElement('div');
+  slide.className = 'slide';
+  const tmpCharts = [];
+  try{
+    let bodyHtml = '';
+    if (esActos){
+      const repArea = countBy(filterByField(rows,'area_que_reporta',areaSel), 'area_que_reporta');
+      const comArea = countBy(filterByField(rows,'area_reportada',areaSel), 'area_reportada');
+      const comPers = countBy(filterByField(rows,'area_reportada',areaSel), 'colaborador', {excludeDash:true});
+      const repPers = countBy(filterByField(rows,'area_que_reporta',areaSel), 'reporto', {excludeDash:true});
+      const hPers = Math.max(430, Math.max(comPers.length, repPers.length) * 15);
+      bodyHtml = `
+        <div class="slide-col" style="flex:1;">
+          ${slidePanel('Actos reportados por área','sl_c1',912,330)}
+          ${slidePanel('Actos inseguros cometidos por persona','sl_c3',912,hPers)}
+        </div>
+        <div class="slide-col" style="flex:1;">
+          ${slidePanel('Actos cometidos por área','sl_c2',912,330)}
+          ${slidePanel('Actos inseguros reportados por persona','sl_c4',912,hPers)}
+        </div>`;
+      slide.innerHTML = buildSlideShell(titulo, mesTxt, kpiLbl, rows.length, bodyHtml);
+      document.body.appendChild(slide);
+      tmpCharts.push(slideChart('sl_c1', repArea.map(x=>x[0]), repArea.map(x=>x[1]), '#0098D6', false));
+      tmpCharts.push(slideChart('sl_c2', comArea.map(x=>x[0]), comArea.map(x=>x[1]), '#2E3B47', false));
+      tmpCharts.push(slideChart('sl_c3', comPers.map(x=>x[0]), comPers.map(x=>x[1]), '#E32934', true));
+      tmpCharts.push(slideChart('sl_c4', repPers.map(x=>x[0]), repPers.map(x=>x[1]), '#0098D6', true));
+    } else {
+      const porArea = countBy(filterByField(rows,'area_que_reporta',areaSel), 'area_que_reporta');
+      const areasRep = countBy(filterByField(rows,'area_a_reportar',areaSel), 'area_a_reportar');
+      const personas = countBy(filterByField(rows,'area_que_reporta',areaSel), 'persona');
+      const hPers = Math.max(720, personas.length * 15);
+      bodyHtml = `
+        <div class="slide-col" style="flex:1.55;">
+          ${slidePanel('Condiciones inseguras reportadas por área','sl_c1',1130,330)}
+          ${slidePanel('Áreas reportadas por condiciones inseguras','sl_c2',1130,330)}
+        </div>
+        <div class="slide-col" style="flex:1;">
+          ${slidePanel('Condiciones inseguras reportadas por persona','sl_c3',694,hPers)}
+        </div>`;
+      slide.innerHTML = buildSlideShell(titulo, mesTxt, kpiLbl, rows.length, bodyHtml);
+      document.body.appendChild(slide);
+      tmpCharts.push(slideChart('sl_c1', porArea.map(x=>x[0]), porArea.map(x=>x[1]), '#0098D6', false));
+      tmpCharts.push(slideChart('sl_c2', areasRep.map(x=>x[0]), areasRep.map(x=>x[1]), '#5FC1E8', false));
+      tmpCharts.push(slideChart('sl_c3', personas.map(x=>x[0]), personas.map(x=>x[1]), '#0098D6', true));
+    }
+
+    await new Promise(r => setTimeout(r, 250));
+    const canvas = await html2canvas(slide, { backgroundColor:'#FFFFFF', scale:2, useCORS:true, logging:false });
+    const a = document.createElement('a');
+    a.download = `SSO_Lamina_${esActos?'Actos':'Condiciones'}_${mesTxt.replace(/ /g,'_')}_${fecha}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  }catch(err){
+    alert('No se pudo generar la lámina: ' + err.message);
+  }finally{
+    tmpCharts.forEach(c => { try{ c.destroy(); }catch(e){} });
+    if (slide.parentNode) slide.parentNode.removeChild(slide);
+    btn.disabled = false;
+    btn.innerHTML = prev;
+  }
+}
+
+function buildSlideShell(titulo, mesTxt, kpiLbl, kpiVal, bodyHtml){
+  return `
+    <div class="slide-banner">${titulo}<img src="./files/logo-cbc.png" alt=""></div>
+    <div class="slide-meta">
+      <img src="./files/logo-planta-cuyotenango.png" alt="">
+      <div class="slide-chip"><div class="t">Mes</div><div class="v" style="font-size:22px;">${mesTxt}</div></div>
+      <div class="slide-chip"><div class="t">${kpiLbl}</div><div class="v">${kpiVal}</div></div>
+    </div>
+    <div class="slide-body">${bodyHtml}</div>`;
+}
+
+document.getElementById('exportSlideBtn').addEventListener('click', exportSlide);
 
 window.addEventListener('hashchange', () => {
   const t = (location.hash || '').replace('#','');
